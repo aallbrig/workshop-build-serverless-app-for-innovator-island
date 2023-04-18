@@ -10,4 +10,6 @@ This is a learning project for me so I can solidify my serverless application kn
 1. [Build a Serverless Web App for a Theme Park: Episode 3 - AWS Virtual Workshop](https://youtu.be/aNgmgZjzNr4)
 1. [Build a Serverless Web App for a Theme Park: Episode 4 - AWS Virtual Workshop](https://youtu.be/G1Hukehp52Q)
 1. [Build a Serverless Web App for a Theme Park: Episode 5 - AWS Virtual Workshop](https://youtu.be/FOwoq6uEcJw)
+1. [aws-samples/aws-serverless-workshop-innovator-island](https://github.com/aws-samples/aws-serverless-workshop-innovator-island)
+
 
