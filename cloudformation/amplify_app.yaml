@@ -1,0 +1,67 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: Amplify App intended to be used for a public github monorepo
+Resources:
+  WebAppFrontend:
+    Type: 'AWS::Amplify::App'
+    Properties:
+      Name: Web App Frontend
+      Description: An Amplify app connected to a public GitHub repository
+      Repository: !Ref Repository
+      AccessToken: !Ref GitHubAccessToken
+      EnvironmentVariables:
+          - Name: AMPLIFY_DIFF_DEPLOY
+            Value: 'false'
+          - Name: AMPLIFY_MONOREPO_APP_ROOT
+            Value: !Ref WebAppFrontendRoot
+      BuildSpec: !Sub
+        - |
+          version: 1
+          applications:
+            - frontend:
+                phases:
+                  preBuild:
+                    commands:
+                      - npm ci
+                  build:
+                    commands:
+                      - npm run build
+                artifacts:
+                  baseDirectory: dist
+                  files:
+                    - '**/*'
+                cache:
+                  paths:
+                    - node_modules/**/*
+              appRoot: ${WebAppFrontendRoot}
+        - { WebAppFrontendRoot: !Ref WebAppFrontendRoot }
+      CustomRules:
+        - Source: '/<*>'
+          Target: '/index.html'
+          Status: '404-200'
+        - Source: '</^[^.]+$|\\.(?!(css|gif|ico|jpg|js|png|txt|svg|woff|ttf|map|json)$)([^.]+$)/>'
+          Target: '/index.html'
+          Status: '200'
+
+  ProductionBranch:
+    DependsOn: WebAppFrontend
+    Type: 'AWS::Amplify::Branch'
+    Properties:
+      BranchName: !Ref Branch
+      AppId: !GetAtt WebAppFrontend.AppId
+
+Parameters:
+  GitHubAccessToken:
+    Description: Access token for GitHub with repo scope
+    Type: String
+    NoEcho: true
+  Repository:
+    Description: Access token for GitHub with repo scope
+    Type: String
+  Branch:
+    Description: Git branch to deploy
+    Type: String
+    Default: main
+  WebAppFrontendRoot:
+    Description: Root directory of the web app frontend
+    Type: String
+    Default: apps/webapp-frontend
