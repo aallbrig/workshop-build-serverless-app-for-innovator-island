@@ -1,0 +1,85 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: Innovator Island - Flow & Traffic Controller (ride queue times service).
+Resources:
+  FATcontroller:
+    Type: AWS::SNS::Topic
+    Metadata:
+      SamResourceId: FATcontroller
+  DDBtable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      AttributeDefinitions:
+      - AttributeName: ID
+        AttributeType: S
+      KeySchema:
+      - AttributeName: ID
+        KeyType: HASH
+      BillingMode: PROVISIONED
+      ProvisionedThroughput:
+        ReadCapacityUnits: 2
+        WriteCapacityUnits: 2
+    Metadata:
+      SamResourceId: DDBtable
+  UpdateRides:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: s3://theme-park-sam-deploys-702353326783/9d809763339059b2408dd6ca58e94d53
+      Handler: app.handler
+      Runtime: nodejs16.x
+      MemorySize: 128
+      Environment:
+        Variables:
+          DDBtable:
+            Ref: DDBtable
+          TopicArn:
+            Ref: FATcontroller
+      Policies:
+      - DynamoDBCrudPolicy:
+          TableName:
+            Ref: DDBtable
+      - Statement:
+        - Effect: Allow
+          Resource:
+            Ref: FATcontroller
+          Action:
+          - sns:Publish
+      Events:
+        UpdateRidesEvent:
+          Type: Schedule
+          Properties:
+            Schedule: rate(1 minute)
+    Metadata:
+      SamResourceId: UpdateRides
+  AppConfigurationLambda:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: s3://theme-park-sam-deploys-702353326783/b9a054ac562a324c469a3fc37946a50a
+      Handler: app.handler
+      Runtime: nodejs16.x
+      Timeout: 15
+      MemorySize: 128
+      Environment:
+        Variables:
+          DDBtable:
+            Ref: DDBtable
+      Policies:
+      - DynamoDBCrudPolicy:
+          TableName:
+            Ref: DDBtable
+    Metadata:
+      SamResourceId: AppConfigurationLambda
+  DeploymentCustomResource:
+    Type: Custom::AppConfiguration
+    Properties:
+      ServiceToken:
+        Fn::GetAtt:
+        - AppConfigurationLambda
+        - Arn
+    Metadata:
+      SamResourceId: DeploymentCustomResource
+Outputs:
+  RideUpdatesSNStopic:
+    Description: SNS topic to receive ride uptime updates
+    Value:
+      Ref: FATcontroller
