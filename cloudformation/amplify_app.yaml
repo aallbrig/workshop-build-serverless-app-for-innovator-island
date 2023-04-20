@@ -48,6 +48,8 @@ Resources:
     Properties:
       BranchName: !Ref Branch
       AppId: !GetAtt WebAppFrontend.AppId
+      Stage: PRODUCTION
+      Framework: Vue
 
 Parameters:
   GitHubAccessToken:
