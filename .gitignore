@@ -4,4 +4,4 @@
 **/node_modules/*
 **/package.yaml
 
-**/.aws-sam/build
+**/.aws-sam

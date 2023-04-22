@@ -41,21 +41,21 @@ function main() {
     --stack-name theme-park-sam-deployment-bucket \
     --parameter-overrides \
       BucketName="${sam_deployment_bucket_name}"
-  aws cloudformation describe-stacks \
+  deploy_bucket=$(aws cloudformation describe-stacks \
     --stack-name theme-park-sam-deployment-bucket \
     --query "Stacks[0].Outputs[?OutputKey=='BucketName'].OutputValue" \
-    --output text
+    --output text)
 
   # Deploy ride controller
   pushd "${repo_root}"/apps/ride-controller
-  sam package --output-template-file package.yaml --s3-bucket "${sam_deployment_bucket_name}"
+  sam package --output-template-file package.yaml --s3-bucket "${deploy_bucket}"
   sam deploy --template-file package.yaml --stack-name theme-park-ride-times --capabilities CAPABILITY_IAM
   popd
 
   # Deploy remaining SAM backend
   pushd "${repo_root}"/apps/sam-app
   sam build
-  sam package --output-template-file package.yaml --s3-bucket "${sam_deployment_bucket_name}"
+  sam package --output-template-file package.yaml --s3-bucket "${deploy_bucket}"
   sam deploy --template-file packaged.yaml --stack-name theme-park-backend --capabilities CAPABILITY_IAM
   AWS_REGION=$(aws configure get region)
   FINAL_BUCKET=$(aws cloudformation describe-stack-resource --stack-name theme-park-backend --logical-resource-id FinalBucket --query "StackResourceDetail.PhysicalResourceId" --output text)
@@ -73,12 +73,13 @@ function main() {
   npm install
   node ./importData.js "${AWS_REGION}" "${DDB_TABLE}"
   aws dynamodb scan --table-name "${DDB_TABLE}"
-  aws cloudformation describe-stacks --stack-name theme-park-backend --query "Stacks[0].Outputs[?OutputKey=='InitStateApi'].OutputValue" --output text
+  initStateAPI=$(aws cloudformation describe-stacks --stack-name theme-park-backend --query "Stacks[0].Outputs[?OutputKey=='InitStateApi'].OutputValue" --output text)
   popd
 
   # Update frontend
-  INITSTATEAPI=$(aws cloudformation describe-stacks --stack-name theme-park-backend --query "Stacks[0].Outputs[?OutputKey=='InitStateApi'].OutputValue" --output text)
-  sed -i "s@initStateAPI: ''@initStateAPI: '$INITSTATEAPI'@g" "${repo_root}"/apps/webapp-frontend/src/config.js
+  if ! grep "${initStateAPI}" "${repo_root}"/apps/webapp-frontend/src/config.js; then
+    sed -i '' "s@initStateAPI: ''@initStateAPI: '${initStateAPI}'@g" "${repo_root}"/apps/webapp-frontend/src/config.js
+  fi
 }
 
 main
