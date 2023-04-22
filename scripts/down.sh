@@ -1,14 +1,39 @@
 #!/usr/bin/env bash
 
-function main() {
+function delete_stack() {
+  stack_name="${1}"
+
+  if [ -z "${stack_name}" ]; then
+    echo "Stack name must be provided"
+    exit 1
+  fi
+
+  aws cloudformation delete-stack --stack-name "${stack_name}"
+}
+
+function check_dependant_binaries() {
   if ! command -v aws &> /dev/null
   then
       echo "aws could not be found"
       exit
   fi
+}
 
-  aws cloudformation delete-stack \
-    --stack-name innovator-island-amplify-app
+function main() {
+  check_dependant_binaries
+  stacks=(innovator-island-amplify-app theme-park-ride-times theme-park-backend)
+
+  for stack in "${stacks[@]}"; do
+    delete_stack "${stack}"
+  done
+
+  # hack: remove all resources from S3 bucket before deleting the cloudformation stack
+  deploy_bucket=$(aws cloudformation describe-stacks \
+    --stack-name theme-park-sam-deployment-bucket \
+    --query "Stacks[0].Outputs[?OutputKey=='BucketName'].OutputValue" \
+    --output text)
+  aws s3 rm s3://"${deploy_bucket}" --recursive
+  delete_stack theme-park-sam-deployment-bucket
 }
 
 main

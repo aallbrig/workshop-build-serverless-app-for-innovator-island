@@ -29,9 +29,9 @@ function main() {
     --template-file "${repo_root}"/cloudformation/amplify_app.yaml \
     --stack-name innovator-island-amplify-app \
     --parameter-overrides \
-      Repository=$REPOSITORY \
-      WebAppFrontendRoot=$WEBAPPFRONTENDROOT \
-      GitHubAccessToken=$GITHUBACCESSTOKEN
+      Repository="${REPOSITORY}" \
+      WebAppFrontendRoot="${WEBAPPFRONTENDROOT}" \
+      GitHubAccessToken="${GITHUBACCESSTOKEN}"
 
   # Bucket for SAM deployments
   account_id=$(aws sts get-caller-identity --query Account --output text)
