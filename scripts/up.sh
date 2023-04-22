@@ -25,9 +25,6 @@ function main() {
   check_required_environment_variables
   repo_root=$(git rev-parse --show-toplevel)
 
-  # get root of repository using `git`
-  ROOT=$(git rev-parse --show-toplevel)
-
   aws cloudformation deploy \
     --template-file "${repo_root}"/cloudformation/amplify_app.yaml \
     --stack-name innovator-island-amplify-app \
@@ -38,8 +35,16 @@ function main() {
 
   # Bucket for SAM deployments
   account_id=$(aws sts get-caller-identity --query Account --output text)
-  sam_deployment_bucket_name="theme-park-sam-deploys-${account_id}"
-  aws s3 mb s3://"${sam_deployment_bucket_name}"
+  sam_deployment_bucket_name="theme-park-sam-deployment-${account_id}"
+  aws cloudformation deploy \
+    --template-file "${repo_root}"/cloudformation/sam_deployment_bucket.yaml \
+    --stack-name theme-park-sam-deployment-bucket \
+    --parameter-overrides \
+      BucketName="${sam_deployment_bucket_name}"
+  aws cloudformation describe-stacks \
+    --stack-name theme-park-sam-deployment-bucket \
+    --query "Stacks[0].Outputs[?OutputKey=='BucketName'].OutputValue" \
+    --output text
 
   # Deploy ride controller
   pushd "${repo_root}"/apps/ride-controller
@@ -50,7 +55,7 @@ function main() {
   # Deploy remaining SAM backend
   pushd "${repo_root}"/apps/sam-app
   sam build
-  sam package --output-template-file packaged.yaml --s3-bucket "${sam_deployment_bucket_name}"
+  sam package --output-template-file package.yaml --s3-bucket "${sam_deployment_bucket_name}"
   sam deploy --template-file packaged.yaml --stack-name theme-park-backend --capabilities CAPABILITY_IAM
   AWS_REGION=$(aws configure get region)
   FINAL_BUCKET=$(aws cloudformation describe-stack-resource --stack-name theme-park-backend --logical-resource-id FinalBucket --query "StackResourceDetail.PhysicalResourceId" --output text)

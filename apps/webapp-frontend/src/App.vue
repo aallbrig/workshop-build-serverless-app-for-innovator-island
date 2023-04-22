@@ -26,7 +26,7 @@ export default {
     initState: function (items) {
       let initRideTimes
       items.map(item => {
-        // Initial ride time valus - store until locations populaterd
+        // Initial ride time values - store until locations populated
         if (item.partitionKey === 'config' && item.message) {
           initRideTimes = item.message
         }

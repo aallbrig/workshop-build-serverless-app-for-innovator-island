@@ -1,0 +1,17 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: S3 Bucket for SAM deployments
+Resources:
+  SamDeployBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Ref BucketName
+
+Parameters:
+  BucketName:
+    Description: Name of Bucket
+    Type: String
+
+Outputs:
+  BucketName:
+    Description: Name of Bucket
+    Value: !Ref SamDeployBucket
