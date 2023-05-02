@@ -2,11 +2,7 @@
 
 function delete_stack() {
   stack_name="${1}"
-
-  if [ -z "${stack_name}" ]; then
-    echo "Stack name must be provided"
-    exit 1
-  fi
+  [ -z "${stack_name}" ] && { echo "Stack name must be provided"; exit 1; }
 
   aws cloudformation delete-stack --stack-name "${stack_name}"
 }
@@ -14,8 +10,8 @@ function delete_stack() {
 function check_dependant_binaries() {
   if ! command -v aws &> /dev/null
   then
-      echo "aws could not be found"
-      exit
+    echo "aws could not be found"
+    exit 1
   fi
 }
 
@@ -34,6 +30,11 @@ function main() {
     --output text)
   aws s3 rm s3://"${deploy_bucket}" --recursive
   delete_stack theme-park-sam-deployment-bucket
+
+  repo_root=$(git rev-parse --show-toplevel)
+  if ! grep "initStateAPI: ''" "${repo_root}"/apps/webapp-frontend/src/config.js; then
+    sed -i '' "s@initStateAPI: '.*'@initStateAPI: ''@g" "${repo_root}"/apps/webapp-frontend/src/config.js
+  fi
 }
 
 main
