@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 __required_binaries=(git aws node)
-__required_environment_variables=(GITHUBACCESSTOKEN REPOSITORY WEBAPPFRONTENDROOT)
+__required_environment_variables=(AMPLIFYAPPGITHUBACCESSTOKEN REPOSITORY_URL WEBAPPFRONTENDROOT)
 
 set -e
 
@@ -24,14 +24,24 @@ function main() {
   check_required_environment_variables
   repo_root=$(git rev-parse --show-toplevel)
 
+  # TODO It'd be great to have the gh CLI interactions in order to create an appropriate GitHub access token for an aws amplify app (right now this is hidden knowledge for this script; see GitHubAccessToken value of AMPLIFYAPPGITHUBACCESSTOKEN environment variable)
+  # Using `curl` or `gh api`
+  # send a POST to create a new github fine-grained access token that is limited to
+  # aallbrig/workshop-build-serverless-app-for-innovator-island
+  # and has permission to (copied from github amplify app that you can manually trigger in aws)
+  # - Write access to files located at amplify.yml
+  # - Read access to code and metadata
+  # - Read and write access to checks, pull requests, and repository hooks
+  # ...Once this access token is create then use it instead of AMPLIFYAPPGITHUBACCESSTOKEN environment variable
+
   # Amplify web app for frontend
   aws cloudformation deploy \
     --template-file "${repo_root}"/cloudformation/amplify_app.yaml \
     --stack-name innovator-island-amplify-app \
     --parameter-overrides \
-      Repository="${REPOSITORY}" \
+      Repository="${REPOSITORY_URL}" \
       WebAppFrontendRoot="${WEBAPPFRONTENDROOT}" \
-      GitHubAccessToken="${GITHUBACCESSTOKEN}"
+      GitHubAccessToken="${AMPLIFYAPPGITHUBACCESSTOKEN}"
 
   # Bucket for SAM deployments
   account_id=$(aws sts get-caller-identity --query Account --output text)

@@ -4,7 +4,7 @@ Resources:
   WebAppFrontend:
     Type: 'AWS::Amplify::App'
     Properties:
-      Name: Web App Frontend
+      Name: Innovator Island User WebApp Frontend
       Description: An Amplify app connected to a public GitHub repository
       Repository: !Ref Repository
       AccessToken: !Ref GitHubAccessToken
@@ -67,3 +67,8 @@ Parameters:
     Description: Root directory of the web app frontend
     Type: String
     Default: apps/webapp-frontend
+
+Outputs:
+  FrontendWebsiteURL:
+    Description: URL of the frontend website
+    Value: !Sub 'https://main.${WebAppFrontend.DefaultDomain}'
