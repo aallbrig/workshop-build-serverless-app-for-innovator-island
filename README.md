@@ -3,7 +3,8 @@ This project is based on the instructions for [a workshop by AWS here](https://s
 
 This is a learning project for me so I can solidify my serverless application knowledge set.
 
-Note: I've stopped working on the workshop since I can't get module 1 working, heh.
+[Current Progress Video Bookmark](https://youtu.be/EhgOoFbCID0?t=1306)
+
 
 ## Resources
 1. [Youtube Playlist of the series](https://www.youtube.com/watch?v=GhZpSYQ6F9M&list=PL5bUlblGfe0LpQv23EVaUmeWkD7ZddnAw)
@@ -13,5 +14,3 @@ Note: I've stopped working on the workshop since I can't get module 1 working, h
 1. [Build a Serverless Web App for a Theme Park: Episode 4 - AWS Virtual Workshop](https://youtu.be/G1Hukehp52Q)
 1. [Build a Serverless Web App for a Theme Park: Episode 5 - AWS Virtual Workshop](https://youtu.be/FOwoq6uEcJw)
 1. [aws-samples/aws-serverless-workshop-innovator-island](https://github.com/aws-samples/aws-serverless-workshop-innovator-island)
-
-
