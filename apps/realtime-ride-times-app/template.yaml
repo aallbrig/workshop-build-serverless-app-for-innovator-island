@@ -18,6 +18,12 @@ Parameters:
   SNSTopicName:
     Type: String
     Description: SNS Topic that this lambda fn will publish to
+  IOTDataEndpoint:
+    Type: String
+    Description: AWS IoT endpoint for publishing to the topic
+  DDBTableName:
+    Type: String
+    Description: DynamoDB table name for storing ride times
 
 Resources:
   RealTimeRideTimesLambda:
@@ -27,6 +33,11 @@ Resources:
       Handler: app.handler
       Runtime: nodejs14.x
       Role: !Ref LambdaRoleName
+      Environment:
+        Variables:
+          IOT_DATA_ENDPOINT: !Ref IOTDataEndpoint
+          DDB_TABLE_NAME: !Ref DDBTableName
+          IOT_TOPIC: theme-park-rides
       Events:
         SNSTopicTrigger:
           Type: SNS

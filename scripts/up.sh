@@ -98,6 +98,10 @@ function main() {
 
   # Create new realtime ride times app
   pushd "${repo_root}"/apps/realtime-ride-times-app
+  # grab some info for lambda envvars
+  iot_endpoint_address=$(aws iot describe-endpoint --endpoint-type iot:Data-ATS --query 'endpointAddress' --output text)
+  dynamo_table_name=$(aws dynamodb list-tables --query "TableNames[?contains(@, 'backend')]" --output text)
+  echo "iot_endpoint_address: ${iot_endpoint_address} dynamo_table_name: ${dynamo_table_name}"
   sam build
   sam package --output-template-file package.yaml --s3-bucket "${deploy_bucket}" --s3-prefix realtime-ride-times-app
   sam deploy \
@@ -106,7 +110,9 @@ function main() {
     --capabilities CAPABILITY_IAM \
     --parameter-overrides \
       LambdaRoleName="${theme_park_lambda_role}" \
-      SNSTopicName="${ride_updates_sns_topic}"
+      SNSTopicName="${ride_updates_sns_topic}" \
+      IOTDataEndpoint="${iot_endpoint_address}" \
+      DDBTableName="${dynamo_table_name}"
   popd
 
   # Update frontend
