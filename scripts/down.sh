@@ -17,7 +17,7 @@ function check_dependant_binaries() {
 
 function main() {
   check_dependant_binaries
-  stacks=(innovator-island-amplify-app theme-park-ride-times theme-park-backend)
+  stacks=(innovator-island-amplify-app theme-park-ride-times theme-park-backend realtime-ride-times-app)
 
   for stack in "${stacks[@]}"; do
     delete_stack "${stack}"
