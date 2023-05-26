@@ -60,32 +60,53 @@ function main() {
 
   # Deploy ride controller
   pushd "${repo_root}"/apps/ride-controller
-  sam package --output-template-file package.yaml --s3-bucket "${deploy_bucket}"
-  sam deploy --template-file package.yaml --stack-name theme-park-ride-times --capabilities CAPABILITY_IAM
+  sam build
+  sam package --output-template-file package.yaml --s3-bucket "${deploy_bucket}" --s3-prefix ride-controller
+  sam deploy \
+    --template-file package.yaml \
+    --stack-name theme-park-ride-times \
+    --capabilities CAPABILITY_IAM \
+    --no-fail-on-empty-changeset
+  ride_updates_sns_topic=$(aws cloudformation describe-stacks --stack-name theme-park-ride-times --query "Stacks[0].Outputs[?OutputKey=='RideUpdatesSNSTopic'].OutputValue" --output text)
   popd
 
   # Deploy remaining SAM backend
   pushd "${repo_root}"/apps/sam-app
   sam build
-  sam package --output-template-file package.yaml --s3-bucket "${deploy_bucket}"
-  sam deploy --template-file package.yaml --stack-name theme-park-backend --capabilities CAPABILITY_IAM
+  sam package --output-template-file package.yaml --s3-bucket "${deploy_bucket}" --s3-prefix sam-app
+  sam deploy \
+    --template-file package.yaml \
+    --stack-name theme-park-backend \
+    --capabilities CAPABILITY_IAM \
+    --no-fail-on-empty-changeset
   aws_region=$(aws configure get region)
   final_bucket=$(aws cloudformation describe-stack-resource --stack-name theme-park-backend --logical-resource-id FinalBucket --query "StackResourceDetail.PhysicalResourceId" --output text)
   processing_bucket=$(aws cloudformation describe-stack-resource --stack-name theme-park-backend --logical-resource-id ProcessingBucket --query "StackResourceDetail.PhysicalResourceId" --output text)
   upload_bucket=$(aws cloudformation describe-stack-resource --stack-name theme-park-backend --logical-resource-id UploadBucket --query "StackResourceDetail.PhysicalResourceId" --output text)
   dynamo_table=$(aws cloudformation describe-stack-resource --stack-name theme-park-backend --logical-resource-id DynamoDBTable --query "StackResourceDetail.PhysicalResourceId" --output text)
-  echo $final_bucket
-  echo $processing_bucket
-  echo $upload_bucket
-  echo $dynamo_table
+  theme_park_lambda_role=$(aws cloudformation describe-stacks --stack-name theme-park-backend --query "Stacks[0].Outputs[?OutputKey=='ThemeParkLambdaRole'].OutputValue" --output text)
   popd
 
   # Populate the DynamoDB Table
   pushd "${repo_root}"/apps/local-app
   npm install
+  # This is probably not idempotent (todo: make it idempotent)
   node ./importData.js "${aws_region}" "${dynamo_table}"
-  aws dynamodb scan --table-name "${dynamo_table}"
+  # aws dynamodb scan --table-name "${dynamo_table}"
   initStateAPI=$(aws cloudformation describe-stacks --stack-name theme-park-backend --query "Stacks[0].Outputs[?OutputKey=='InitStateApi'].OutputValue" --output text)
+  popd
+
+  # Create new realtime ride times app
+  pushd "${repo_root}"/apps/realtime-ride-times-app
+  sam build
+  sam package --output-template-file package.yaml --s3-bucket "${deploy_bucket}" --s3-prefix realtime-ride-times-app
+  sam deploy \
+    --template-file package.yaml \
+    --stack-name realtime-ride-times-app \
+    --capabilities CAPABILITY_IAM \
+    --parameter-overrides \
+      LambdaRoleName="${theme_park_lambda_role}" \
+      SNSTopicName="${ride_updates_sns_topic}"
   popd
 
   # Update frontend

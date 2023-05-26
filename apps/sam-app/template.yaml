@@ -361,3 +361,5 @@ Outputs:
     Value: !GetAtt CloudFrontDistribution.DomainName
   CloudFrontDistributionId:
     Value: !GetAtt CloudFrontDistribution.Id
+  ThemeParkLambdaRole:
+    Value: !GetAtt ThemeParkLambdaRole.Arn

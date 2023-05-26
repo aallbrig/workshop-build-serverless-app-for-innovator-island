@@ -79,7 +79,7 @@ Resources:
     Metadata:
       SamResourceId: DeploymentCustomResource
 Outputs:
-  RideUpdatesSNStopic:
+  RideUpdatesSNSTopic:
     Description: SNS topic to receive ride uptime updates
     Value:
       Ref: FATcontroller
