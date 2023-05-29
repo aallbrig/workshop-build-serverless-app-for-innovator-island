@@ -34,6 +34,7 @@ function main() {
   # - Read and write access to checks, pull requests, and repository hooks
   # ...Once this access token is create then use it instead of AMPLIFYAPPGITHUBACCESSTOKEN environment variable
 
+  # region: amplify app
   # Amplify web app for frontend
   aws cloudformation deploy \
     --template-file "${repo_root}"/cloudformation/amplify_app.yaml \
@@ -42,7 +43,9 @@ function main() {
       Repository="${REPOSITORY_URL}" \
       WebAppFrontendRoot="${WEBAPPFRONTENDROOT}" \
       GitHubAccessToken="${AMPLIFYAPPGITHUBACCESSTOKEN}"
+  # endregion
 
+  # region sam deployment bucket
   # Bucket for SAM deployments
   account_id=$(aws sts get-caller-identity --query Account --output text)
   sam_deployment_bucket_name="theme-park-sam-deployment-${account_id}"
@@ -57,7 +60,9 @@ function main() {
       --query "Stacks[0].Outputs[?OutputKey=='BucketName'].OutputValue" \
       --output text \
   )
+  # endregion
 
+  # region ride-controller (./apps/ride-controller)
   # Deploy ride controller
   pushd "${repo_root}"/apps/ride-controller
   sam build
@@ -69,7 +74,9 @@ function main() {
     --no-fail-on-empty-changeset
   ride_updates_sns_topic=$(aws cloudformation describe-stacks --stack-name theme-park-ride-times --query "Stacks[0].Outputs[?OutputKey=='RideUpdatesSNSTopic'].OutputValue" --output text)
   popd
+  # endregion
 
+  # region theme-park-backend (./apps/sam-app)
   # Deploy remaining SAM backend
   pushd "${repo_root}"/apps/sam-app
   sam build
@@ -86,7 +93,9 @@ function main() {
   dynamo_table=$(aws cloudformation describe-stack-resource --stack-name theme-park-backend --logical-resource-id DynamoDBTable --query "StackResourceDetail.PhysicalResourceId" --output text)
   theme_park_lambda_role=$(aws cloudformation describe-stacks --stack-name theme-park-backend --query "Stacks[0].Outputs[?OutputKey=='ThemeParkLambdaRole'].OutputValue" --output text)
   popd
+  # endregion
 
+  # region local operations (./apps/local-app)
   # Populate the DynamoDB Table
   pushd "${repo_root}"/apps/local-app
   npm install
@@ -94,8 +103,11 @@ function main() {
   node ./importData.js "${aws_region}" "${dynamo_table}"
   # aws dynamodb scan --table-name "${dynamo_table}"
   initStateAPI=$(aws cloudformation describe-stacks --stack-name theme-park-backend --query "Stacks[0].Outputs[?OutputKey=='InitStateApi'].OutputValue" --output text)
+  identityPoolId=$(aws cloudformation describe-stacks --stack-name theme-park-backend --output text --query "Stacks[0].Outputs[?OutputKey=='IdentityPoolId'].OutputValue" --output text)
   popd
+  # endregion
 
+  # region: realtime ride times app (./apps/realtime-ride-times-app)
   # Create new realtime ride times app
   pushd "${repo_root}"/apps/realtime-ride-times-app
   # grab some info for lambda envvars
@@ -112,13 +124,26 @@ function main() {
       LambdaRoleName="${theme_park_lambda_role}" \
       SNSTopicName="${ride_updates_sns_topic}" \
       IOTDataEndpoint="${iot_endpoint_address}" \
-      DDBTableName="${dynamo_table_name}"
+      DDBTableName="${dynamo_table_name}" \
+    --no-fail-on-empty-changeset
   popd
+  # endregion
 
+  # region: webapp-frontend (./apps/webapp-frontend)
   # Update frontend
-  if ! grep "${initStateAPI}" "${repo_root}"/apps/webapp-frontend/src/config.js; then
-    sed -i '' "s@initStateAPI: '.*'@initStateAPI: '${initStateAPI}'@g" "${repo_root}"/apps/webapp-frontend/src/config.js
+  if ! grep "initStateAPI: '${initStateAPI}'" "${repo_root}"/apps/webapp-frontend/src/config.js; then
+    sed -i '' "s@initStateAPI: '[^']*'@initStateAPI: '${initStateAPI}'@g" "${repo_root}"/apps/webapp-frontend/src/config.js
   fi
+  if ! grep "poolId: '${identityPoolId}'" "${repo_root}"/apps/webapp-frontend/src/config.js; then
+    sed -i '' "s@poolId: '[^']*'@poolId: '${identityPoolId}'@" "${repo_root}"/apps/webapp-frontend/src/config.js
+  fi
+  if ! grep "host: '${iot_endpoint_address}'" "${repo_root}"/apps/webapp-frontend/src/config.js; then
+    sed -i '' "s@host: '[^']*'@host: '${iot_endpoint_address}'@" "${repo_root}"/apps/webapp-frontend/src/config.js
+  fi
+  if ! grep "region: '${aws_region}'" "${repo_root}"/apps/webapp-frontend/src/config.js; then
+    sed -i '' "s@region: '[^']*'@region: '${aws_region}'@" "${repo_root}"/apps/webapp-frontend/src/config.js
+  fi
+  # endregion
 }
 
 main
