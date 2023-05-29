@@ -107,7 +107,7 @@ function main() {
   popd
   # endregion
 
-  # region: realtime ride times app (./apps/realtime-ride-times-app)
+  # region: (module 2) realtime ride times app (./apps/realtime-ride-times-app)
   # Create new realtime ride times app
   pushd "${repo_root}"/apps/realtime-ride-times-app
   # grab some info for lambda envvars
@@ -129,7 +129,39 @@ function main() {
   popd
   # endregion
 
-  # region: webapp-frontend (./apps/webapp-frontend)
+  # region (module 3) chromakey processor (./apps/chromakey-processor)
+  pushd "${repo_root}"/apps/chromakey-processor
+
+  # Apparently opencv needs to be compiled for amazon linux 2, which is handled by a lambda layer.
+  # Signal: if the file doesn't exist locally, wget it, upload it to the sam deployment bucket, and then create a lambda layer out of it
+  if [ ! -f ./lambda-layer/opencv-python-37.zip ]; then
+    mkdir -p ./lambda-layer
+    pushd ./lambda-layer
+
+    # 1. download opencv-python-37.zip (thank you workshop team!)
+    wget https://innovator-island.s3-us-west-2.amazonaws.com/opencv-python-37.zip
+
+    # 2. actually just define the layer in sam template
+    popd
+  fi
+
+  sam build
+  sam package \
+    --output-template-file package.yaml \
+    --s3-bucket "${deploy_bucket}" \
+    --s3-prefix chromakey-processor
+  sam deploy \
+    --template-file package.yaml \
+    --stack-name chromakey-processor \
+    --capabilities CAPABILITY_IAM \
+    --parameter-overrides \
+      LambdaRoleName="${theme_park_lambda_role}" \
+      UploadS3BucketName="${upload_bucket}" \
+    --no-fail-on-empty-changeset
+  popd
+  # endregion
+
+  # region webapp-frontend (./apps/webapp-frontend)
   # Update frontend
   if ! grep "initStateAPI: '${initStateAPI}'" "${repo_root}"/apps/webapp-frontend/src/config.js; then
     sed -i '' "s@initStateAPI: '[^']*'@initStateAPI: '${initStateAPI}'@g" "${repo_root}"/apps/webapp-frontend/src/config.js

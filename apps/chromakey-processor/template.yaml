@@ -1,0 +1,51 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: >
+  chromakey-processor
+
+  This extracts images from green screen
+
+Globals:
+  Function:
+    Timeout: 10
+
+Parameters:
+  LambdaRoleName:
+    Type: String
+    Description: Name of the IAM role to create for the lambda fn
+  UploadS3BucketName:
+    Type: String
+    Description: S3 bucket name for uploading images
+
+Resources:
+  OpenCVLayer:
+    Type: AWS::Serverless::LayerVersion
+    Properties:
+      LayerName: OpenCVLayer
+      Description: OpenCV layer
+      ContentUri: lambda-layer/opencv-python-37.zip
+      CompatibleRuntimes:
+        - python3.7
+
+  ChromakeyProcessor:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: lambda/
+      Handler: app.handler
+      Role: !Ref LambdaRoleName
+      Runtime: python3.7
+      Layers:
+        - !Ref OpenCVLayer
+      Events:
+        S3BucketTrigger:
+          Type: EventBridgeRule
+          Properties:
+            Pattern:
+              source:
+                - aws.s3
+              detail:
+                bucket:
+                  name:
+                    - !Ref UploadS3BucketName
+                eventName:
+                  - 'ObjectCreated:*'

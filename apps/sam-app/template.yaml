@@ -79,6 +79,10 @@ Resources:
   UploadBucket:
     Type: 'AWS::S3::Bucket'
     Properties:
+      # Lol required so that I can subscribe to events in other templates
+      NotificationConfiguration:
+        EventBridgeConfiguration:
+          EventBridgeEnabled: true
       CorsConfiguration:
         CorsRules:
         - AllowedHeaders:

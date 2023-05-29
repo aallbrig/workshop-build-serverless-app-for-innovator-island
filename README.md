@@ -5,7 +5,7 @@ This is a learning project for me so that I can solidify my serverless applicati
 
 I enjoy making things more difficult for myself so any manual steps described in the workshop series will be automated. Check out `./scripts/up.sh` and `./scripts/down.sh` to see this effort.
 
-[Current Progress Video Bookmark](https://youtu.be/EhgOoFbCID0?t=1306)
+[Current Progress Video Bookmark](https://youtu.be/aNgmgZjzNr4?t=1026)
 
 
 ## Resources
