@@ -24,7 +24,7 @@ Resources:
   UpdateRides:
     Type: AWS::Serverless::Function
     Properties:
-      CodeUri: s3://theme-park-sam-deploys-702353326783/9d809763339059b2408dd6ca58e94d53
+      CodeUri: fatController/
       Handler: app.handler
       Runtime: nodejs16.x
       MemorySize: 128
@@ -54,7 +54,7 @@ Resources:
   AppConfigurationLambda:
     Type: AWS::Serverless::Function
     Properties:
-      CodeUri: s3://theme-park-sam-deploys-702353326783/b9a054ac562a324c469a3fc37946a50a
+      CodeUri: initDB/
       Handler: app.handler
       Runtime: nodejs16.x
       Timeout: 15

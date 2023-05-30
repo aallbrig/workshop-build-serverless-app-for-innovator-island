@@ -48,7 +48,7 @@ function main() {
   # region sam deployment bucket
   # Bucket for SAM deployments
   account_id=$(aws sts get-caller-identity --query Account --output text)
-  sam_deployment_bucket_name="theme-park-sam-deployment-${account_id}"
+  sam_deployment_bucket_name="theme-park-sam-deployments-${account_id}"
   aws cloudformation deploy \
     --template-file "${repo_root}"/cloudformation/sam_deployment_bucket.yaml \
     --stack-name theme-park-sam-deployment-bucket \
@@ -157,6 +157,7 @@ function main() {
     --parameter-overrides \
       LambdaRoleName="${theme_park_lambda_role}" \
       UploadS3BucketName="${upload_bucket}" \
+      ProcessingS3BucketName="${processing_bucket}" \
     --no-fail-on-empty-changeset
   popd
   # endregion

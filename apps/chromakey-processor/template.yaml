@@ -16,6 +16,9 @@ Parameters:
   UploadS3BucketName:
     Type: String
     Description: S3 bucket name for uploading images
+  ProcessingS3BucketName:
+    Type: String
+    Description: S3 bucket name for processing images
 
 Resources:
   OpenCVLayer:
@@ -34,6 +37,11 @@ Resources:
       Handler: app.handler
       Role: !Ref LambdaRoleName
       Runtime: python3.7
+      Environment:
+        Variables:
+          HSV_LOWER: '[36, 100, 100]'
+          HSV_UPPER: '[70, 255, 255]'
+          OUTPUT_BUCKET_NAME: !Ref ProcessingS3BucketName
       Layers:
         - !Ref OpenCVLayer
       Events:
