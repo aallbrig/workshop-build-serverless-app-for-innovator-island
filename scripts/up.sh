@@ -92,6 +92,7 @@ function main() {
   upload_bucket=$(aws cloudformation describe-stack-resource --stack-name theme-park-backend --logical-resource-id UploadBucket --query "StackResourceDetail.PhysicalResourceId" --output text)
   dynamo_table=$(aws cloudformation describe-stack-resource --stack-name theme-park-backend --logical-resource-id DynamoDBTable --query "StackResourceDetail.PhysicalResourceId" --output text)
   theme_park_lambda_role=$(aws cloudformation describe-stacks --stack-name theme-park-backend --query "Stacks[0].Outputs[?OutputKey=='ThemeParkLambdaRole'].OutputValue" --output text)
+  upload_bucket_object_created_topic=$(aws cloudformation describe-stacks --stack-name theme-park-backend --query "Stacks[0].Outputs[?OutputKey=='UploadBucketObjectCreatedTopic'].OutputValue" --output text)
   popd
   # endregion
 
@@ -156,8 +157,8 @@ function main() {
     --capabilities CAPABILITY_IAM \
     --parameter-overrides \
       LambdaRoleName="${theme_park_lambda_role}" \
-      UploadS3BucketName="${upload_bucket}" \
       ProcessingS3BucketName="${processing_bucket}" \
+      UploadBucketObjectCreatedTopic="${upload_bucket_object_created_topic}" \
     --no-fail-on-empty-changeset
   popd
   # endregion

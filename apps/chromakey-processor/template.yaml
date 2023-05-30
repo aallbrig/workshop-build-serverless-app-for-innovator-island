@@ -13,12 +13,12 @@ Parameters:
   LambdaRoleName:
     Type: String
     Description: Name of the IAM role to create for the lambda fn
-  UploadS3BucketName:
-    Type: String
-    Description: S3 bucket name for uploading images
   ProcessingS3BucketName:
     Type: String
     Description: S3 bucket name for processing images
+  UploadBucketObjectCreatedTopic:
+    Type: String
+    Description: SNS topic ARN for upload bucket object created events
 
 Resources:
   OpenCVLayer:
@@ -44,9 +44,18 @@ Resources:
           OUTPUT_BUCKET_NAME: !Ref ProcessingS3BucketName
       Layers:
         - !Ref OpenCVLayer
-      Events:
-        S3BucketTrigger:
-          Type: S3
-          Properties:
-            Bucket: !Ref UploadS3BucketName
-            Events: s3:ObjectCreated:*
+
+  ChromakeyProcessorSNSTriggerPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !GetAtt ChromakeyProcessor.Arn
+      Action: 'lambda:InvokeFunction'
+      Principal: 'sns.amazonaws.com'
+      SourceArn: !Ref UploadBucketObjectCreatedTopic
+
+  ChromakeyProcessorSubscription:
+    Type: AWS::SNS::Subscription
+    Properties:
+      Endpoint: !GetAtt ChromakeyProcessor.Arn
+      Protocol: lambda
+      TopicArn: !Ref UploadBucketObjectCreatedTopic

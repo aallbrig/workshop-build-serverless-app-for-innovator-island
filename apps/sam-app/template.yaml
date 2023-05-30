@@ -7,6 +7,12 @@ Globals:
   Function:
     Timeout: 5
 
+Parameters:
+  UploadBucketName:
+    Type: String
+    Description: S3 bucket name for upload images
+    Default: theme-park-backend-uploadbucket
+
 Resources:
   InitStateFunction:
     Type: AWS::Serverless::Function # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
@@ -76,13 +82,38 @@ Resources:
   # S3 Buckets                             #
   ##########################################
 
+  UploadBucketObjectCreatedTopic:
+    Type: AWS::SNS::Topic
+
+  UploadBucketObjectCreatedTopicPolicy:
+    Type: AWS::SNS::TopicPolicy
+    Properties:
+      Topics:
+        - !Ref UploadBucketObjectCreatedTopic
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Sid: AllowS3BucketToPublish
+            Effect: Allow
+            Principal:
+              Service: s3.amazonaws.com
+            Action: sns:Publish
+            Resource: !Ref UploadBucketObjectCreatedTopic
+            Condition:
+              ArnLike:
+                aws:SourceArn: !Sub arn:aws:s3:::${UploadBucketName}-${AWS::AccountId}
+
   UploadBucket:
+    DependsOn:
+      - UploadBucketObjectCreatedTopic
+      - UploadBucketObjectCreatedTopicPolicy
     Type: 'AWS::S3::Bucket'
     Properties:
-      # Lol required so that I can subscribe to events in other templates
+      BucketName: !Sub ${UploadBucketName}-${AWS::AccountId}
       NotificationConfiguration:
-        EventBridgeConfiguration:
-          EventBridgeEnabled: true
+        TopicConfigurations:
+        - Event: 's3:ObjectCreated:*'
+          Topic: !Ref UploadBucketObjectCreatedTopic
       CorsConfiguration:
         CorsRules:
         - AllowedHeaders:
@@ -98,7 +129,6 @@ Resources:
 
   ProcessingBucket:
     Type: 'AWS::S3::Bucket'
-
 
   FinalBucket:
     Type: 'AWS::S3::Bucket'
@@ -367,3 +397,5 @@ Outputs:
     Value: !GetAtt CloudFrontDistribution.Id
   ThemeParkLambdaRole:
     Value: !GetAtt ThemeParkLambdaRole.Arn
+  UploadBucketObjectCreatedTopic:
+    Value: !Ref UploadBucketObjectCreatedTopic
