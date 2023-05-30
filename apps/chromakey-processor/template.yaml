@@ -46,14 +46,7 @@ Resources:
         - !Ref OpenCVLayer
       Events:
         S3BucketTrigger:
-          Type: EventBridgeRule
+          Type: S3
           Properties:
-            Pattern:
-              source:
-                - aws.s3
-              detail:
-                bucket:
-                  name:
-                    - !Ref UploadS3BucketName
-                eventName:
-                  - 'ObjectCreated:*'
+            Bucket: !Ref UploadS3BucketName
+            Events: s3:ObjectCreated:*

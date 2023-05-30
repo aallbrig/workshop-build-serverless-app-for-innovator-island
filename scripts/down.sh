@@ -1,12 +1,5 @@
 #!/usr/bin/env bash
 
-function delete_stack() {
-  stack_name="${1}"
-  [ -z "${stack_name}" ] && { echo "Stack name must be provided"; exit 1; }
-
-  aws cloudformation delete-stack --stack-name "${stack_name}"
-}
-
 function check_dependant_binaries() {
   if ! command -v aws &> /dev/null
   then
@@ -17,19 +10,39 @@ function check_dependant_binaries() {
 
 function main() {
   check_dependant_binaries
-  stacks=(innovator-island-amplify-app theme-park-ride-times theme-park-backend realtime-ride-times-app chromakey-processor)
 
-  for stack in "${stacks[@]}"; do
-    delete_stack "${stack}"
-  done
+  stacks=( \
+    innovator-island-amplify-app \
+    theme-park-ride-times \
+    theme-park-backend \
+    realtime-ride-times-app \
+    chromakey-processor \
+    theme-park-sam-deployment-bucket \
+  )
 
   # hack: remove all resources from S3 bucket before deleting the cloudformation stack
   deploy_bucket=$(aws cloudformation describe-stacks \
     --stack-name theme-park-sam-deployment-bucket \
     --query "Stacks[0].Outputs[?OutputKey=='BucketName'].OutputValue" \
     --output text)
-  aws s3 rm s3://"${deploy_bucket}" --recursive
-  delete_stack theme-park-sam-deployment-bucket
+  upload_bucket=$(aws cloudformation describe-stack-resource --stack-name theme-park-backend --logical-resource-id UploadBucket --query "StackResourceDetail.PhysicalResourceId" --output text)
+  processing_bucket=$(aws cloudformation describe-stack-resource --stack-name theme-park-backend --logical-resource-id ProcessingBucket --query "StackResourceDetail.PhysicalResourceId" --output text)
+  final_bucket=$(aws cloudformation describe-stack-resource --stack-name theme-park-backend --logical-resource-id FinalBucket --query "StackResourceDetail.PhysicalResourceId" --output text)
+  buckets=( \
+    "${deploy_bucket}" \
+    "${upload_bucket}" \
+    "${processing_bucket}" \
+    "${final_bucket}" \
+  )
+
+  # Clear S3 buckets before deleting stacks
+  for bucket in "${buckets[@]}"; do
+    aws s3 rm s3://"${bucket}" --recursive
+  done
+
+  for stack in "${stacks[@]}"; do
+    aws cloudformation delete-stack --stack-name "${stack}"
+  done
 
   repo_root=$(git rev-parse --show-toplevel)
   if ! grep "initStateAPI: ''" "${repo_root}"/apps/webapp-frontend/src/config.js; then
