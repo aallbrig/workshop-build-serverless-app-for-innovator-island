@@ -26,9 +26,9 @@ Resources:
     Properties:
       LayerName: OpenCVLayer
       Description: OpenCV layer
-      ContentUri: lambda-layer/opencv-python-37.zip
+      ContentUri: lambda-layer/cv2-python39.zip
       CompatibleRuntimes:
-        - python3.7
+        - python3.9
 
   ChromakeyProcessor:
     Type: AWS::Serverless::Function
@@ -36,7 +36,7 @@ Resources:
       CodeUri: lambda/
       Handler: app.handler
       Role: !Ref LambdaRoleName
-      Runtime: python3.7
+      Runtime: python3.9
       Environment:
         Variables:
           HSV_LOWER: '[36, 100, 100]'

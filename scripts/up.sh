@@ -135,14 +135,25 @@ function main() {
 
   # Apparently opencv needs to be compiled for amazon linux 2, which is handled by a lambda layer.
   # Signal: if the file doesn't exist locally, wget it, upload it to the sam deployment bucket, and then create a lambda layer out of it
-  if [ ! -f ./lambda-layer/opencv-python-37.zip ]; then
+  if [ ! -f ./lambda-layer/cv2-python39.zip ]; then
     mkdir -p ./lambda-layer
     pushd ./lambda-layer
 
-    # 1. download opencv-python-37.zip (thank you workshop team!)
-    wget https://innovator-island.s3-us-west-2.amazonaws.com/opencv-python-37.zip
+    # New instructions
+    # instructions copied from this source repo: https://github.com/awslabs/lambda-opencv
+    # 1. clone repo and cwd == repo root
+    git clone https://github.com/aallbrig/lambda-opencv
+    pushd lambda-opencv
+    git checkout python39-only
+    # (hack) remove .git folder so files show up in my editor without issue
+    rm -rf .git
 
-    # 2. actually just define the layer in sam template
+    # 2. build docker image
+    docker build --tag=lambda-layer-factory:39 .
+    popd
+
+    # 3. run docker image and extract relevant zip file
+    docker run --rm -it -v $(pwd):/data lambda-layer-factory:39 cp /packages/cv2-python39.zip /data
     popd
   fi
 
