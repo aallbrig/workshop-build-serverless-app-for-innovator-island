@@ -54,8 +54,9 @@ def lambda_handler(event, context):
     print("Starting handler")
 
     # get object metadata from event
-    input_bucket_name = event['Records'][0]['s3']['bucket']['name']
-    file_key = event['Records'][0]['s3']['object']['key']
+    s3_message = json.loads(event['Records'][0]['Sns']['Message'])
+    input_bucket_name = s3_message['Records'][0]['s3']['bucket']['name']
+    file_key = s3_message['Records'][0]['s3']['object']['key']
     output_bucket_name = os.environ['OUTPUT_BUCKET_NAME']
     output_file_key = file_key.replace('.jpg', '.png')
     print("Input bucket: ", input_bucket_name)
