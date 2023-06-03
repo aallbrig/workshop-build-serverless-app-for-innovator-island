@@ -7,6 +7,12 @@ I enjoy making things more difficult for myself so any manual steps described in
 
 [Current Progress Video Bookmark](https://youtu.be/aNgmgZjzNr4?t=1026)
 
+## Issues
+- `[ERROR] Runtime.ImportModuleError: Unable to import module 'app': urllib3 v2.0 only supports OpenSSL 1.1.1+, currently the 'ssl' module is compiled with OpenSSL 1.0.2k-fips  26 Jan 2017. See: https://github.com/urllib3/urllib3/issues/2168
+  Traceback (most recent call last):`
+
+    If I want to compile a new version of the opencv library, this might be helpful: [https://github.com/awslabs/lambda-opencv](https://github.com/awslabs/lambda-opencv)
+
 
 ## Resources
 1. [Youtube Playlist of the series](https://www.youtube.com/watch?v=GhZpSYQ6F9M&list=PL5bUlblGfe0LpQv23EVaUmeWkD7ZddnAw)

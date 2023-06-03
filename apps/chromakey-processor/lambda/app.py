@@ -12,6 +12,7 @@ s3 = boto3.client('s3')
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
 
+
 def upload_file(file_name, bucket, object_name=None):
     """Upload a file to an S3 bucket
 
@@ -34,22 +35,23 @@ def upload_file(file_name, bucket, object_name=None):
         return False
     return True
 
+
 def scale_image(image):
     _image = image
     target_height = 800
 
     height, width, channels = _image.shape
     logger.info('Original size: {}h x {}w'.format(height, width))
-    scale = height/target_height
+    scale = height / target_height
     if scale > 1:
-        _image = cv2.resize(image, (int(width/scale), int(height/scale)))
+        _image = cv2.resize(image, (int(width / scale), int(height / scale)))
         height, width, channels = image.shape
-        logger.info('New size: {}h x {}w'.format(int(height/scale), int(width/scale)))
+        logger.info('New size: {}h x {}w'.format(int(height / scale), int(width / scale)))
     return _image
 
-def lambda_handler(event, context):
 
-    print ("Starting handler")
+def lambda_handler(event, context):
+    print("Starting handler")
 
     # get object metadata from event
     input_bucket_name = event['Records'][0]['s3']['bucket']['name']
@@ -108,10 +110,10 @@ def lambda_handler(event, context):
     # Extract the non-green parts of the image
     result = cv2.bitwise_and(image_alpha, image_alpha, mask=mask)
 
-    #Save the result
-    cv2.imwrite(local_output_temp_file,result)
+    # Save the result
+    cv2.imwrite(local_output_temp_file, result)
 
-    #Save to S3
+    # Save to S3
     if upload_file(local_output_temp_file, output_bucket_name, output_file_key):
         print('Processed file uploaded.')
 
