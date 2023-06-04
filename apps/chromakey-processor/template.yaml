@@ -42,6 +42,7 @@ Resources:
           HSV_LOWER: '[36, 100, 100]'
           HSV_UPPER: '[70, 255, 255]'
           OUTPUT_BUCKET_NAME: !Ref ProcessingS3BucketName
+      MemorySize: 3008
       Layers:
         - !Ref OpenCVLayer
 
