@@ -17,6 +17,7 @@ function main() {
     theme-park-backend \
     realtime-ride-times-app \
     chromakey-processor \
+    compositing-processor \
     theme-park-sam-deployment-bucket \
   )
 

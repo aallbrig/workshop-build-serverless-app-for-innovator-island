@@ -1,0 +1,16 @@
+{
+  "name": "compositing-processor",
+  "version": "1.0.0",
+  "description": "",
+  "main": "app.js",
+  "repository": "https://github.com/awslabs/aws-sam-cli/tree/develop/samcli/local/init/templates/cookiecutter-aws-sam-hello-nodejs",
+  "author": "SAM CLI",
+  "license": "MIT",
+  "dependencies": {
+    "aws-sdk": "^2.701.0",
+    "jimp": "^0.13.0"
+  },
+  "scripts": {
+    "test": "echo \\\"Error: no test specified\\\" && exit 1"
+  }
+}

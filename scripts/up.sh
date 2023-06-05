@@ -88,11 +88,12 @@ function main() {
     --no-fail-on-empty-changeset
   aws_region=$(aws configure get region)
   final_bucket=$(aws cloudformation describe-stack-resource --stack-name theme-park-backend --logical-resource-id FinalBucket --query "StackResourceDetail.PhysicalResourceId" --output text)
-  processing_bucket=$(aws cloudformation describe-stack-resource --stack-name theme-park-backend --logical-resource-id ProcessingBucket --query "StackResourceDetail.PhysicalResourceId" --output text)
   upload_bucket=$(aws cloudformation describe-stack-resource --stack-name theme-park-backend --logical-resource-id UploadBucket --query "StackResourceDetail.PhysicalResourceId" --output text)
+  upload_bucket_object_created_topic=$(aws cloudformation describe-stacks --stack-name theme-park-backend --query "Stacks[0].Outputs[?OutputKey=='UploadBucketObjectCreatedTopic'].OutputValue" --output text)
+  processing_bucket=$(aws cloudformation describe-stack-resource --stack-name theme-park-backend --logical-resource-id ProcessingBucket --query "StackResourceDetail.PhysicalResourceId" --output text)
+  processing_bucket_object_created_topic=$(aws cloudformation describe-stacks --stack-name theme-park-backend --query "Stacks[0].Outputs[?OutputKey=='ProcessingBucketObjectCreatedTopic'].OutputValue" --output text)
   dynamo_table=$(aws cloudformation describe-stack-resource --stack-name theme-park-backend --logical-resource-id DynamoDBTable --query "StackResourceDetail.PhysicalResourceId" --output text)
   theme_park_lambda_role=$(aws cloudformation describe-stacks --stack-name theme-park-backend --query "Stacks[0].Outputs[?OutputKey=='ThemeParkLambdaRole'].OutputValue" --output text)
-  upload_bucket_object_created_topic=$(aws cloudformation describe-stacks --stack-name theme-park-backend --query "Stacks[0].Outputs[?OutputKey=='UploadBucketObjectCreatedTopic'].OutputValue" --output text)
   popd
   # endregion
 
@@ -130,7 +131,7 @@ function main() {
   popd
   # endregion
 
-  # region (module 3) chromakey processor (./apps/chromakey-processor)
+  # region (module 3a) chromakey processor lambda app (./apps/chromakey-processor)
   pushd "${repo_root}"/apps/chromakey-processor
 
   # Apparently opencv needs to be compiled for amazon linux 2, which is handled by a lambda layer.
@@ -171,6 +172,27 @@ function main() {
       ProcessingS3BucketName="${processing_bucket}" \
       UploadBucketObjectCreatedTopic="${upload_bucket_object_created_topic}" \
     --no-fail-on-empty-changeset
+  popd
+  # endregion
+
+  # region (module 3b) compositing processor lambda app (./apps/compositing-processor)
+  pushd "${repo_root}"/apps/compositing-processor
+
+  sam build
+  sam package \
+    --output-template-file package.yaml \
+    --s3-bucket "${deploy_bucket}" \
+    --s3-prefix compositing-processor
+  sam deploy \
+    --template-file package.yaml \
+    --stack-name compositing-processor \
+    --capabilities CAPABILITY_IAM \
+    --parameter-overrides \
+      LambdaRoleName="${theme_park_lambda_role}" \
+      FinalS3BucketName="${final_bucket}" \
+      ProcessingBucketObjectCreatedTopic="${processing_bucket_object_created_topic}" \
+    --no-fail-on-empty-changeset
+
   popd
   # endregion
 

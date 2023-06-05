@@ -10,8 +10,18 @@ Globals:
 Parameters:
   UploadBucketName:
     Type: String
-    Description: S3 bucket name for upload images
+    Description: S3 bucket name for upload images bucket
     Default: theme-park-backend-uploadbucket
+
+  ProcessingBucketName:
+    Type: String
+    Description: S3 bucket name for processing images bucket
+    Default: theme-park-backend-processingbucket
+
+  FinalBucketName:
+    Type: String
+    Description: S3 bucket name for final images bucket
+    Default: theme-park-backend-finalbucket
 
 Resources:
   InitStateFunction:
@@ -127,12 +137,40 @@ Resources:
           AllowedOrigins:
             - "*"
 
+  ProcessingBucketObjectCreatedTopic:
+    Type: AWS::SNS::Topic
+
+  ProcessingBucketObjectCreatedTopicPolicy:
+    Type: AWS::SNS::TopicPolicy
+    Properties:
+      Topics:
+        - !Ref ProcessingBucketObjectCreatedTopic
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Sid: AllowS3BucketToPublish
+            Effect: Allow
+            Principal:
+              Service: s3.amazonaws.com
+            Action: sns:Publish
+            Resource: !Ref ProcessingBucketObjectCreatedTopic
+            Condition:
+              ArnLike:
+                aws:SourceArn: !Sub arn:aws:s3:::${ProcessingBucketName}-${AWS::AccountId}
+
   ProcessingBucket:
     Type: 'AWS::S3::Bucket'
+    Properties:
+      BucketName: !Sub ${ProcessingBucketName}-${AWS::AccountId}
+      NotificationConfiguration:
+        TopicConfigurations:
+          - Event: 's3:ObjectCreated:*'
+            Topic: !Ref ProcessingBucketObjectCreatedTopic
 
   FinalBucket:
     Type: 'AWS::S3::Bucket'
     Properties:
+      BucketName: !Sub ${FinalBucketName}-${AWS::AccountId}
       PublicAccessBlockConfiguration:
         BlockPublicAcls: true
         BlockPublicPolicy: true
@@ -387,8 +425,12 @@ Outputs:
     Value: !Ref ThemeParkRealtime
   UploadBucketName:
     Value: !Ref UploadBucket
+  UploadBucketObjectCreatedTopic:
+    Value: !Ref UploadBucketObjectCreatedTopic
   ProcessingBucketName:
     Value: !Ref ProcessingBucket
+  ProcessingBucketObjectCreatedTopic:
+    Value: !Ref ProcessingBucketObjectCreatedTopic
   FinalBucketName:
     Value: !Ref FinalBucket
   WebAppDomain:
@@ -397,5 +439,3 @@ Outputs:
     Value: !GetAtt CloudFrontDistribution.Id
   ThemeParkLambdaRole:
     Value: !GetAtt ThemeParkLambdaRole.Arn
-  UploadBucketObjectCreatedTopic:
-    Value: !Ref UploadBucketObjectCreatedTopic

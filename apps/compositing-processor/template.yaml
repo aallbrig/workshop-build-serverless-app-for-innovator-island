@@ -1,0 +1,48 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: >
+  compositing processor lambda app
+
+  Input: chromakey-processor output from processing bucket
+  Output: composited image into final output bucket
+
+Parameters:
+  LambdaRoleName:
+    Type: String
+    Description: Name of the IAM role to create for the lambda fn
+  FinalS3BucketName:
+    Type: String
+    Description: S3 bucket name for final images
+  ProcessingBucketObjectCreatedTopic:
+    Type: String
+    Description: SNS topic ARN for processing bucket object created events
+
+
+Resources:
+  CompositingProcessor:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: lambda/
+      Role: !Ref LambdaRoleName
+      Handler: app.handler
+      Runtime: nodejs16.x
+      Timeout: 10
+      MemorySize: 2048
+      Environment:
+        Variables:
+          OUTPUT_BUCKET_NAME: !Ref FinalS3BucketName
+
+  CompositingProcessorSNSTriggerPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !GetAtt CompositingProcessor.Arn
+      Action: 'lambda:InvokeFunction'
+      Principal: 'sns.amazonaws.com'
+      SourceArn: !Ref ProcessingBucketObjectCreatedTopic
+
+  CompositingProcessorSubscription:
+    Type: AWS::SNS::Subscription
+    Properties:
+      Endpoint: !GetAtt CompositingProcessor.Arn
+      Protocol: lambda
+      TopicArn: !Ref ProcessingBucketObjectCreatedTopic

@@ -1,0 +1,18 @@
+{
+  "Records": [
+    {
+      "EventSource": "aws:sns",
+      "EventVersion": "1.0",
+      "EventSubscriptionArn": "arn:aws:sns:us-east-2:123456789:theme-park-backend-UploadBucketObjectCreatedTopic-55z4AC06407z:bcee897b-fd74-44e2-a6f8-005f1d021bf9",
+      "Sns": {
+        "Type": "Notification",
+        "MessageId": "0e9e57b5-72e5-5c70-ac62-0b43c34d799f",
+        "TopicArn": "arn:aws:sns:us-east-2:123456789:theme-park-backend-UploadBucketObjectCreatedTopic-55z4AC06407z",
+        "Subject": "Amazon S3 Notification",
+        "Message": "{\"Records\":[{\"eventVersion\":\"2.1\",\"eventSource\":\"aws:s3\",\"awsRegion\":\"us-east-2\",\"eventTime\":\"2023-06-04T15:36:07.612Z\",\"eventName\":\"ObjectCreated:Put\",\"userIdentity\":{\"principalId\":\"AWS:AROA2HB4FIK7RDV2FDNHY:chromakey-processor-ChromakeyProcessor-gizynMGHMaba\"},\"requestParameters\":{\"sourceIPAddress\":\"1.1.1.1\"},\"responseElements\":{\"x-amz-request-id\":\"MF14E5BCR0621BC3\",\"x-amz-id-2\":\"qWi/R/XN8FPE2nJQLCeHGBPFYPknJ/1Ri8jttsZcZV14nUnEAtqAK2x2/0Ph74CW9ympNwZ6hK09G5ERlaTXVSvE8znDwGgJUHPwnyPI8kA=\"},\"s3\":{\"s3SchemaVersion\":\"1.0\",\"configurationId\":\"09f868c6-ccb3-41a9-9024-90cac906105e\",\"bucket\":{\"name\":\"theme-park-backend-uploadbucket-123456789\",\"ownerIdentity\":{\"principalId\":\"A1XQ2V9FTSXVL3\"},\"arn\":\"arn:aws:s3:::theme-park-backend-uploadbucket-123456789\"},\"object\":{\"key\":\"green-screen-test.png\",\"size\":587154,\"eTag\":\"cef3beabca66da676bf3d938ac9ace3a\",\"sequencer\":\"00647CAF6774EC44A3\"}}}]}",
+        "Timestamp": "2023-06-04T15:36:08.719Z",
+        "MessageAttributes": {}
+      }
+    }
+  ]
+}

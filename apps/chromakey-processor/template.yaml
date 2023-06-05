@@ -5,10 +5,6 @@ Description: >
 
   This extracts images from green screen
 
-Globals:
-  Function:
-    Timeout: 10
-
 Parameters:
   LambdaRoleName:
     Type: String
@@ -37,12 +33,13 @@ Resources:
       Handler: app.lambda_handler
       Role: !Ref LambdaRoleName
       Runtime: python3.9
+      Timeout: 10
+      MemorySize: 3008
       Environment:
         Variables:
           HSV_LOWER: '[36, 100, 100]'
           HSV_UPPER: '[70, 255, 255]'
           OUTPUT_BUCKET_NAME: !Ref ProcessingS3BucketName
-      MemorySize: 3008
       Layers:
         - !Ref OpenCVLayer
 
