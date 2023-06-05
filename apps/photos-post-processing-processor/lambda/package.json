@@ -1,0 +1,15 @@
+{
+  "name": "photos-post-processing-processor",
+  "version": "1.0.0",
+  "description": "",
+  "main": "app.js",
+  "repository": "https://github.com/awslabs/aws-sam-cli/tree/develop/samcli/local/init/templates/cookiecutter-aws-sam-hello-nodejs",
+  "author": "SAM CLI",
+  "license": "MIT",
+  "dependencies": {
+    "aws-sdk": "^2.997.0"
+  },
+  "scripts": {
+    "test": "mocha tests/unit/"
+  }
+}

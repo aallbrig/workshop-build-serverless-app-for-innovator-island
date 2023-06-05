@@ -1,0 +1,54 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: >
+  Photos post processing processor
+  
+  Lets frontend know photo processing is done based on IOT topic
+
+Parameters:
+  LambdaRoleName:
+    Type: String
+    Description: Name of the IAM role to create for the lambda fn
+  FinalBucketObjectCreatedTopic:
+    Type: String
+    Description: SNS topic ARN for final bucket object created events
+  IotDataEndpoint:
+    Type: String
+    Description: IoT data endpoint
+  DDBTableName:
+    Type: String
+    Description: DynamoDB table name
+  WebAppDomain:
+    Type: String
+    Description: Web app domain
+
+Resources:
+  PhotosPostProcessingProcessor:
+    Type: AWS::Serverless::Function
+    Properties:
+      Role: !Ref LambdaRoleName
+      CodeUri: lambda/
+      Handler: app.handler
+      Runtime: nodejs16.x
+      Timeout: 3
+      MemorySize: 128
+      Environment:
+        Variables:
+          IOT_DATA_ENDPOINT: !Ref IotDataEndpoint
+          DDB_TABLE_NAME: !Ref DDBTableName
+          WEB_APP_DOMAIN: !Ref WebAppDomain
+
+  PhotosPostProcessingProcessorSNSTriggerPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !GetAtt PhotosPostProcessingProcessor.Arn
+      Action: 'lambda:InvokeFunction'
+      Principal: 'sns.amazonaws.com'
+      SourceArn: !Ref FinalBucketObjectCreatedTopic
+
+  PhotosPostProcessingProcessorSubscription:
+    Type: AWS::SNS::Subscription
+    Properties:
+      Endpoint: !GetAtt PhotosPostProcessingProcessor.Arn
+      Protocol: lambda
+      TopicArn: !Ref FinalBucketObjectCreatedTopic

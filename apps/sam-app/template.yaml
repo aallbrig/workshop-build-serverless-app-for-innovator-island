@@ -167,6 +167,27 @@ Resources:
           - Event: 's3:ObjectCreated:*'
             Topic: !Ref ProcessingBucketObjectCreatedTopic
 
+  FinalBucketObjectCreatedTopic:
+    Type: AWS::SNS::Topic
+
+  FinalBucketObjectCreatedTopicPolicy:
+    Type: AWS::SNS::TopicPolicy
+    Properties:
+      Topics:
+        - !Ref FinalBucketObjectCreatedTopic
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Sid: AllowS3BucketToPublish
+            Effect: Allow
+            Principal:
+              Service: s3.amazonaws.com
+            Action: sns:Publish
+            Resource: !Ref FinalBucketObjectCreatedTopic
+            Condition:
+              ArnLike:
+                aws:SourceArn: !Sub arn:aws:s3:::${FinalBucketName}-${AWS::AccountId}
+
   FinalBucket:
     Type: 'AWS::S3::Bucket'
     Properties:
@@ -433,6 +454,8 @@ Outputs:
     Value: !Ref ProcessingBucketObjectCreatedTopic
   FinalBucketName:
     Value: !Ref FinalBucket
+  FinalBucketObjectCreatedTopic:
+    Value: !Ref FinalBucketObjectCreatedTopic
   WebAppDomain:
     Value: !GetAtt CloudFrontDistribution.DomainName
   CloudFrontDistributionId:

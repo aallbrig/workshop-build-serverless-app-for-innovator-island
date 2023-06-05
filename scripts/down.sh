@@ -49,6 +49,9 @@ function main() {
   if ! grep "initStateAPI: ''" "${repo_root}"/apps/webapp-frontend/src/config.js; then
     sed -i '' "s@initStateAPI: '[^']*'@initStateAPI: ''@g" "${repo_root}"/apps/webapp-frontend/src/config.js
   fi
+  if ! grep "photoUploadURL: ''" "${repo_root}"/apps/webapp-frontend/src/config.js; then
+    sed -i '' "s@photoUploadURL: '[^']*'@photoUploadURL: ''@g" "${repo_root}"/apps/webapp-frontend/src/config.js
+  fi
   if ! grep "poolId: ''" "${repo_root}"/apps/webapp-frontend/src/config.js; then
     sed -i '' "s@poolId: '[^']*'@poolId: ''@g" "${repo_root}"/apps/webapp-frontend/src/config.js
   fi

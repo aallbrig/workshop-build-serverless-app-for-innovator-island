@@ -43,6 +43,7 @@ function main() {
       Repository="${REPOSITORY_URL}" \
       WebAppFrontendRoot="${WEBAPPFRONTENDROOT}" \
       GitHubAccessToken="${AMPLIFYAPPGITHUBACCESSTOKEN}"
+  webapp_domain=$(aws cloudformation describe-stacks --stack-name innovator-island-amplify-app --query "Stacks[0].Outputs[?OutputKey=='FrontendWebsiteURL'].OutputValue" --output text)
   # endregion
 
   # region sam deployment bucket
@@ -87,13 +88,17 @@ function main() {
     --capabilities CAPABILITY_IAM \
     --no-fail-on-empty-changeset
   aws_region=$(aws configure get region)
-  final_bucket=$(aws cloudformation describe-stack-resource --stack-name theme-park-backend --logical-resource-id FinalBucket --query "StackResourceDetail.PhysicalResourceId" --output text)
   upload_bucket=$(aws cloudformation describe-stack-resource --stack-name theme-park-backend --logical-resource-id UploadBucket --query "StackResourceDetail.PhysicalResourceId" --output text)
   upload_bucket_object_created_topic=$(aws cloudformation describe-stacks --stack-name theme-park-backend --query "Stacks[0].Outputs[?OutputKey=='UploadBucketObjectCreatedTopic'].OutputValue" --output text)
   processing_bucket=$(aws cloudformation describe-stack-resource --stack-name theme-park-backend --logical-resource-id ProcessingBucket --query "StackResourceDetail.PhysicalResourceId" --output text)
   processing_bucket_object_created_topic=$(aws cloudformation describe-stacks --stack-name theme-park-backend --query "Stacks[0].Outputs[?OutputKey=='ProcessingBucketObjectCreatedTopic'].OutputValue" --output text)
+  final_bucket=$(aws cloudformation describe-stack-resource --stack-name theme-park-backend --logical-resource-id FinalBucket --query "StackResourceDetail.PhysicalResourceId" --output text)
+  final_bucket_object_created_topic=$(aws cloudformation describe-stacks --stack-name theme-park-backend --query "Stacks[0].Outputs[?OutputKey=='FinalBucketObjectCreatedTopic'].OutputValue" --output text)
   dynamo_table=$(aws cloudformation describe-stack-resource --stack-name theme-park-backend --logical-resource-id DynamoDBTable --query "StackResourceDetail.PhysicalResourceId" --output text)
   theme_park_lambda_role=$(aws cloudformation describe-stacks --stack-name theme-park-backend --query "Stacks[0].Outputs[?OutputKey=='ThemeParkLambdaRole'].OutputValue" --output text)
+  initStateAPI=$(aws cloudformation describe-stacks --stack-name theme-park-backend --query "Stacks[0].Outputs[?OutputKey=='InitStateApi'].OutputValue" --output text)
+  uploadAPI=$(aws cloudformation describe-stacks --stack-name theme-park-backend --query "Stacks[0].Outputs[?OutputKey=='UploadApi'].OutputValue" --output text)
+  identityPoolId=$(aws cloudformation describe-stacks --stack-name theme-park-backend --output text --query "Stacks[0].Outputs[?OutputKey=='IdentityPoolId'].OutputValue" --output text)
   popd
   # endregion
 
@@ -104,8 +109,6 @@ function main() {
   # This is probably not idempotent (todo: make it idempotent)
   node ./importData.js "${aws_region}" "${dynamo_table}"
   # aws dynamodb scan --table-name "${dynamo_table}"
-  initStateAPI=$(aws cloudformation describe-stacks --stack-name theme-park-backend --query "Stacks[0].Outputs[?OutputKey=='InitStateApi'].OutputValue" --output text)
-  identityPoolId=$(aws cloudformation describe-stacks --stack-name theme-park-backend --output text --query "Stacks[0].Outputs[?OutputKey=='IdentityPoolId'].OutputValue" --output text)
   popd
   # endregion
 
@@ -196,10 +199,36 @@ function main() {
   popd
   # endregion
 
+  # region (module 3c) photos-post-processing processor lambda app (./apps/photos-post-processing-processor)
+  pushd "${repo_root}"/apps/photos-post-processing-processor
+
+  sam build
+  sam package \
+    --output-template-file package.yaml \
+    --s3-bucket "${deploy_bucket}" \
+    --s3-prefix photos-post-processing-processor
+  sam deploy \
+    --template-file package.yaml \
+    --stack-name photos-post-processing-processor \
+    --capabilities CAPABILITY_IAM \
+    --parameter-overrides \
+      LambdaRoleName="${theme_park_lambda_role}" \
+      FinalBucketObjectCreatedTopic="${final_bucket_object_created_topic}" \
+      IotDataEndpoint="${iot_endpoint_address}" \
+      DDBTableName="${dynamo_table_name}" \
+      WebAppDomain="${webapp_domain}" \
+    --no-fail-on-empty-changeset
+
+  popd
+  # endregion
+
   # region webapp-frontend (./apps/webapp-frontend)
   # Update frontend
   if ! grep "initStateAPI: '${initStateAPI}'" "${repo_root}"/apps/webapp-frontend/src/config.js; then
     sed -i '' "s@initStateAPI: '[^']*'@initStateAPI: '${initStateAPI}'@g" "${repo_root}"/apps/webapp-frontend/src/config.js
+  fi
+  if ! grep "photoUploadURL: '${uploadAPI}'" "${repo_root}"/apps/webapp-frontend/src/config.js; then
+    sed -i '' "s@photoUploadURL: '[^']*'@photoUploadURL: '${uploadAPI}'@g" "${repo_root}"/apps/webapp-frontend/src/config.js
   fi
   if ! grep "poolId: '${identityPoolId}'" "${repo_root}"/apps/webapp-frontend/src/config.js; then
     sed -i '' "s@poolId: '[^']*'@poolId: '${identityPoolId}'@" "${repo_root}"/apps/webapp-frontend/src/config.js
