@@ -1,0 +1,6 @@
+{
+  "OUTPUT_BUCKET_NAME": "test-output-bucket-name-123456789",
+  "WEB_APP_DOMAIN": "https://test.example.com",
+  "DDB_TABLE_NAME": "test-ddb-table-name",
+  "IOT_DATA_ENDPOINT": "https://iotendpoint.test.example.com"
+}

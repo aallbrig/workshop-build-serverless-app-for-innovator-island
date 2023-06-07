@@ -59,6 +59,11 @@ exports.handler = async (event, context) => {
     s3Event = JSON.parse(event.Records[0].Sns.Message)
     console.log(JSON.stringify(s3Event))
 
+    if (s3Event["Event"] === "s3:TestEvent") {
+        console.log("Received s3:TestEvent; connection is confirmed!");
+        return true;
+    }
+
     const params = {
         ObjectKey: s3Event.Records[0].s3.object.key,
         URL: `${process.env.WEB_APP_DOMAIN}/${s3Event.Records[0].s3.object.key}`

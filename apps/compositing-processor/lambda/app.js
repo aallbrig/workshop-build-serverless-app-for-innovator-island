@@ -31,6 +31,11 @@ exports.handler = async (event, context) => {
     s3Event = JSON.parse(event.Records[0].Sns.Message)
     console.log(JSON.stringify(s3Event))
 
+    if (s3Event["Event"] === "s3:TestEvent") {
+        console.log("Received s3:TestEvent; connection is confirmed!");
+        return true;
+    }
+
     const params = {
         Bucket: s3Event.Records[0].s3.bucket.name,
         Key: s3Event.Records[0].s3.object.key
@@ -64,6 +69,7 @@ exports.handler = async (event, context) => {
         ContentType: Jimp.MIME_JPEG,
         Body: fs.readFileSync(output_path),
     }
+
     console.log(outParams)
     console.log(await s3.putObject(outParams).promise())
 }

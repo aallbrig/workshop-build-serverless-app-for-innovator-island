@@ -55,6 +55,10 @@ def lambda_handler(event, context):
 
     # get object metadata from event
     s3_message = json.loads(event['Records'][0]['Sns']['Message'])
+    if 'Event' in s3_message and s3_message['Event'] == 's3:TestEvent':
+        print("s3:TestEvent received; lambda connection confirmed")
+        return
+
     input_bucket_name = s3_message['Records'][0]['s3']['bucket']['name']
     file_key = s3_message['Records'][0]['s3']['object']['key']
     output_bucket_name = os.environ['OUTPUT_BUCKET_NAME']
