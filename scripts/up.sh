@@ -146,7 +146,9 @@ function main() {
     # New instructions
     # instructions copied from this source repo: https://github.com/awslabs/lambda-opencv
     # 1. clone repo and cwd == repo root
-    git clone https://github.com/aallbrig/lambda-opencv
+    if [ ! -d lambda-opencv ]; then
+      git clone https://github.com/aallbrig/lambda-opencv
+    fi
     pushd lambda-opencv
     git checkout python39-only
     # (hack) remove .git folder so files show up in my editor without issue

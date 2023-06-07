@@ -24,7 +24,7 @@ const getBuffer = function(image) {
 // This function composites three images - a background, the green screen photo and a branding frame.
 // The composited image is put back to S3 in the final bucket.
 
-exports.handler = async (event) => {
+exports.handler = async (event, context) => {
     console.log(JSON.stringify(event))
     console.log(JSON.stringify(context))
 
