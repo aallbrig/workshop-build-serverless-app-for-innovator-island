@@ -44,7 +44,6 @@ function main() {
       Repository="${REPOSITORY_URL}" \
       WebAppFrontendRoot="${WEBAPPFRONTENDROOT}" \
       GitHubAccessToken="${AMPLIFYAPPGITHUBACCESSTOKEN}"
-  webapp_domain=$(aws cloudformation describe-stacks --stack-name theme-park-backend --query "Stacks[0].Outputs[?OutputKey=='WebAppDomain'].OutputValue" --output text)
   # endregion
 
   # region sam deployment bucket
@@ -100,6 +99,7 @@ function main() {
   initStateAPI=$(aws cloudformation describe-stacks --stack-name theme-park-backend --query "Stacks[0].Outputs[?OutputKey=='InitStateApi'].OutputValue" --output text)
   uploadAPI=$(aws cloudformation describe-stacks --stack-name theme-park-backend --query "Stacks[0].Outputs[?OutputKey=='UploadApi'].OutputValue" --output text)
   identityPoolId=$(aws cloudformation describe-stacks --stack-name theme-park-backend --output text --query "Stacks[0].Outputs[?OutputKey=='IdentityPoolId'].OutputValue" --output text)
+  webapp_domain=$(aws cloudformation describe-stacks --stack-name theme-park-backend --query "Stacks[0].Outputs[?OutputKey=='WebAppDomain'].OutputValue" --output text)
   popd
   # endregion
 
