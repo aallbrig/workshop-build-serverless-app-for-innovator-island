@@ -8,11 +8,13 @@ function main() {
   popd
   pushd "${repo_root}"/apps/compositing-processor
   sam build
+  sam local invoke CompositingProcessor -e events/testevent.json
   sam local invoke CompositingProcessor -e events/event.json
   popd
   pushd "${repo_root}"/apps/photos-post-processing-processor
   sam build
-  sam local invoke PhotosPostProcessingProcessor -e events/event.json
+  sam local invoke PhotosPostProcessingProcessor -e events/testevent.json
+  sam local invoke PhotosPostProcessingProcessor -e events/event.json --container-env-vars ./env/environmentvariables.json
   popd
 }
 

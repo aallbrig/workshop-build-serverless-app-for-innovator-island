@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 __required_binaries=(git aws node)
 __required_environment_variables=(AMPLIFYAPPGITHUBACCESSTOKEN REPOSITORY_URL WEBAPPFRONTENDROOT)
+ARCH=$(uname -m)
 
 set -e
 
@@ -43,7 +44,7 @@ function main() {
       Repository="${REPOSITORY_URL}" \
       WebAppFrontendRoot="${WEBAPPFRONTENDROOT}" \
       GitHubAccessToken="${AMPLIFYAPPGITHUBACCESSTOKEN}"
-  webapp_domain=$(aws cloudformation describe-stacks --stack-name innovator-island-amplify-app --query "Stacks[0].Outputs[?OutputKey=='FrontendWebsiteURL'].OutputValue" --output text)
+  webapp_domain=$(aws cloudformation describe-stacks --stack-name theme-park-backend --query "Stacks[0].Outputs[?OutputKey=='WebAppDomain'].OutputValue" --output text)
   # endregion
 
   # region sam deployment bucket
@@ -155,7 +156,12 @@ function main() {
     rm -rf .git
 
     # 2. build docker image
-    docker build --tag=lambda-layer-factory:39 .
+    if [[ "$ARCH" == "arm64" ]]; then
+      # e.g. apple silicon M1, M2
+      docker buildx build --platform linux/arm64 --tag=lambda-layer-factory:39 .
+    else
+      docker build --tag=lambda-layer-factory:39 .
+    fi
     popd
 
     # 3. run docker image and extract relevant zip file

@@ -66,7 +66,7 @@ exports.handler = async (event, context) => {
 
     const params = {
         ObjectKey: s3Event.Records[0].s3.object.key,
-        URL: `${process.env.WEB_APP_DOMAIN}/${s3Event.Records[0].s3.object.key}`
+        URL: `https://${process.env.WEB_APP_DOMAIN}/${s3Event.Records[0].s3.object.key}`
     }
     console.log(params)
 
