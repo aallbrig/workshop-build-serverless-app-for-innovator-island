@@ -24,6 +24,7 @@ function main() {
   check_dependant_binaries
   check_required_environment_variables
   repo_root=$(git rev-parse --show-toplevel)
+  aws_region=$(aws configure get region)
 
   # TODO It'd be great to have the gh CLI interactions in order to create an appropriate GitHub access token for an aws amplify app (right now this is hidden knowledge for this script; see GitHubAccessToken value of AMPLIFYAPPGITHUBACCESSTOKEN environment variable)
   # Using `curl` or `gh api`
@@ -34,6 +35,17 @@ function main() {
   # - Read access to code and metadata
   # - Read and write access to checks, pull requests, and repository hooks
   # ...Once this access token is create then use it instead of AMPLIFYAPPGITHUBACCESSTOKEN environment variable
+
+  if [ ! -f "${repo_root}"/apps/local-app/translate/translations.json ]; then
+    pushd "${repo_root}"/apps/local-app/translate
+    node ./translate.js "${aws_region}"
+    popd
+  fi
+
+  if [ ! -f "${repo_root}"/apps/webapp-frontend/src/languages/translations.json ] \
+    || ! diff -q "${repo_root}"/apps/local-app/translate/translations.json "${repo_root}"/apps/webapp-frontend/src/languages/translations.json; then
+    mv "${repo_root}"/apps/local-app/translate/translations.json "${repo_root}"/apps/webapp-frontend/src/languages/translations.json
+  fi
 
   # region: amplify app
   # Amplify web app for frontend
@@ -87,7 +99,6 @@ function main() {
     --stack-name theme-park-backend \
     --capabilities CAPABILITY_IAM \
     --no-fail-on-empty-changeset
-  aws_region=$(aws configure get region)
   upload_bucket=$(aws cloudformation describe-stack-resource --stack-name theme-park-backend --logical-resource-id UploadBucket --query "StackResourceDetail.PhysicalResourceId" --output text)
   upload_bucket_object_created_topic=$(aws cloudformation describe-stacks --stack-name theme-park-backend --query "Stacks[0].Outputs[?OutputKey=='UploadBucketObjectCreatedTopic'].OutputValue" --output text)
   processing_bucket=$(aws cloudformation describe-stack-resource --stack-name theme-park-backend --logical-resource-id ProcessingBucket --query "StackResourceDetail.PhysicalResourceId" --output text)
