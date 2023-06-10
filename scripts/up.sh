@@ -241,6 +241,13 @@ function main() {
   popd
   # endregion
 
+  # region analytics
+  aws cloudformation deploy \
+      --template-file "${repo_root}"/cloudformation/business_analytics.yaml \
+      --stack-name theme-park-business-analytics \
+      --capabilities CAPABILITY_IAM
+  #
+
   # region webapp-frontend (./apps/webapp-frontend)
   # Update frontend
   if ! grep "initStateAPI: '${initStateAPI}'" "${repo_root}"/apps/webapp-frontend/src/config.js; then
