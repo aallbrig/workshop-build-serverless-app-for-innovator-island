@@ -71,8 +71,8 @@ Resources:
                   - "s3:ListBucketMultipartUploads"
                   - "s3:PutObject"
                 Resource:
-                  - !Sub "arn:aws:s3:::${AnalyticsBucketName}"
-                  - !Sub "arn:aws:s3:::${AnalyticsBucketName}/*"
+                  - !Sub "arn:aws:s3:::${AnalyticsBucket}"
+                  - !Sub "arn:aws:s3:::${AnalyticsBucket}/*"
               - Sid: ""
                 Effect: "Allow"
                 Action:
