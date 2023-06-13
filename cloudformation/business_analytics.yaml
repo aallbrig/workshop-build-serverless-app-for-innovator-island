@@ -10,12 +10,39 @@ Parameters:
     Description: Name of Data Stream
     Type: String
     Default: theme-park-data-stream
+  LogGroupName:
+    Description: Name of Log Group
+    Type: String
+    Default: firehose-error-log-group
+  BufferIntervalSeconds:
+    Description: Buffer Interval
+    Type: Number
+    Default: 60
+    MinValue: 60
+    MaxValue: 900
+  BufferSizeInMBs:
+    Description: Buffer Size
+    Type: Number
+    Default: 5
+    MinValue: 1
+    MaxValue: 128
 
 Resources:
   AnalyticsBucket:
     Type: AWS::S3::Bucket
     Properties:
       BucketName: !Sub "${AnalyticsBucketName}-${AWS::AccountId}"
+
+  FirehoseCloudWatchLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub "${DataStreamName}-${AWS::AccountId}"
+
+  FirehoseCloudWatchLogStream:
+    Type: AWS::Logs::LogStream
+    Properties:
+      LogGroupName: !Ref FirehoseCloudWatchLogGroup
+      LogStreamName: error-logs
 
   DataFirehoseRole:
     Type: AWS::IAM::Role
@@ -49,12 +76,12 @@ Resources:
               - Sid: ""
                 Effect: "Allow"
                 Action:
+                  - "logs:CreateLogStream"
                   - "logs:PutLogEvents"
                 Resource:
-                  - !Sub "arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/kinesisfirehose/${DataStreamName}-${AWS::AccountId}:log-stream:*"
-                  - !Sub "arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:${AnalyticsBucketName}:log-stream:*"
+                  - !Sub "arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:${FirehoseCloudWatchLogGroup}:*"
 
-  DataFirehoseDelivery:
+  FirehoseDeliveryStream:
     Type: AWS::KinesisFirehose::DeliveryStream
     Properties:
       DeliveryStreamName: !Sub "${DataStreamName}-${AWS::AccountId}"
@@ -62,22 +89,22 @@ Resources:
       ExtendedS3DestinationConfiguration:
         BucketARN: !GetAtt AnalyticsBucket.Arn
         BufferingHints:
-          IntervalInSeconds: 60
-          SizeInMBs: 50
+          IntervalInSeconds: !Ref BufferIntervalSeconds
+          SizeInMBs: !Ref BufferSizeInMBs
         CompressionFormat: UNCOMPRESSED
         Prefix: data/
-        RoleARN: !GetAtt DataFirehoseRole.Arn
         ErrorOutputPrefix: errors/
+        RoleARN: !GetAtt DataFirehoseRole.Arn
         CloudWatchLoggingOptions:
           Enabled: true
-          LogGroupName: !Sub "${AWS::StackName}-data-firehose"
-          LogStreamName: !Sub "${AWS::StackName}-data-firehose"
+          LogGroupName: !Ref FirehoseCloudWatchLogGroup
+          LogStreamName: !Ref FirehoseCloudWatchLogStream
         S3BackupMode: Disabled
 
 Outputs:
   StreamName:
     Description: Name of Data Stream
-    Value: !Ref DataStreamName
+    Value: !Sub "${DataStreamName}-${AWS::AccountId}"
   StreamArn:
     Description: ARN of Data Stream
-    Value: !GetAtt DataFirehoseDelivery.Arn
+    Value: !GetAtt FirehoseDeliveryStream.Arn

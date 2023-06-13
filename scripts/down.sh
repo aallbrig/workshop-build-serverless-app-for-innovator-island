@@ -20,6 +20,8 @@ function main() {
     compositing-processor \
     photos-post-processing-processor \
     theme-park-sam-deployment-bucket \
+    theme-park-business-analytics \
+    park-simulator \
   )
 
   # hack: remove all resources from S3 bucket before deleting the cloudformation stack
@@ -30,11 +32,13 @@ function main() {
   upload_bucket=$(aws cloudformation describe-stack-resource --stack-name theme-park-backend --logical-resource-id UploadBucket --query "StackResourceDetail.PhysicalResourceId" --output text)
   processing_bucket=$(aws cloudformation describe-stack-resource --stack-name theme-park-backend --logical-resource-id ProcessingBucket --query "StackResourceDetail.PhysicalResourceId" --output text)
   final_bucket=$(aws cloudformation describe-stack-resource --stack-name theme-park-backend --logical-resource-id FinalBucket --query "StackResourceDetail.PhysicalResourceId" --output text)
+  biz_analytics_bucket=$(aws cloudformation describe-stack-resource --stack-name theme-park-business-analytics --logical-resource-id AnalyticsBucket --query "StackResourceDetail.PhysicalResourceId" --output text)
   buckets=( \
     "${deploy_bucket}" \
     "${upload_bucket}" \
     "${processing_bucket}" \
     "${final_bucket}" \
+    "${biz_analytics_bucket}" \
   )
 
   # Clear S3 buckets before deleting stacks

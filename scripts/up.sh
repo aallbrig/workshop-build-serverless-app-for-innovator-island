@@ -248,11 +248,11 @@ function main() {
       --template-file ./cloudformation/business_analytics.yaml \
       --stack-name theme-park-business-analytics \
       --capabilities CAPABILITY_IAM
+  # b. park simulation lambda fn
+  pushd ./apps/park-simulator
   stream_name=$(aws cloudformation describe-stacks --stack-name theme-park-business-analytics --query "Stacks[0].Outputs[?OutputKey=='StreamName'].OutputValue" --output text)
   stream_arn=$(aws cloudformation describe-stacks --stack-name theme-park-business-analytics --query "Stacks[0].Outputs[?OutputKey=='StreamArn'].OutputValue" --output text)
 
-  # b. park simulation lambda fn
-  pushd ./apps/park-simulator
   sam build
   sam package \
       --output-template-file package.yaml \

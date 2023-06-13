@@ -7,7 +7,7 @@ const AWS = require('aws-sdk')
 AWS.config.update({region: process.env.AWS_REGION})
 const firehose = new AWS.Firehose()
 
-const DeliveryStreamName = process.env.streamName || 'theme-park-streaming-data'
+const DeliveryStreamName = process.env.streamName
 const BATCH_LIMIT = 500
 let batch = []
 let sequenceId = 1

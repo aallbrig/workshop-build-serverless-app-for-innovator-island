@@ -5,7 +5,6 @@ Description: Innovator Island - 5 Park stats - Part 2 Simulator.
 Parameters:
   StreamName:
     Type: String
-    Default: 'theme-park-streaming-data'
   StreamArn:
     Type: String
 
@@ -24,6 +23,7 @@ Resources:
       Environment:
         Variables:
           streamName: !Ref StreamName
+          AWS_REGION: !Ref AWS::Region
       Policies:
         - Statement:
           - Effect: Allow
