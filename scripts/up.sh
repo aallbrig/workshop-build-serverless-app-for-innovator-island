@@ -25,6 +25,7 @@ function main() {
   check_required_environment_variables
   repo_root=$(git rev-parse --show-toplevel)
   aws_region=$(aws configure get region)
+  pushd "${repo_root}"
 
   # TODO It'd be great to have the gh CLI interactions in order to create an appropriate GitHub access token for an aws amplify app (right now this is hidden knowledge for this script; see GitHubAccessToken value of AMPLIFYAPPGITHUBACCESSTOKEN environment variable)
   # Using `curl` or `gh api`
@@ -36,21 +37,21 @@ function main() {
   # - Read and write access to checks, pull requests, and repository hooks
   # ...Once this access token is create then use it instead of AMPLIFYAPPGITHUBACCESSTOKEN environment variable
 
-  if [ ! -f "${repo_root}"/apps/local-app/translate/translations.json ]; then
-    pushd "${repo_root}"/apps/local-app/translate
+  if [ ! -f ./apps/local-app/translate/translations.json ]; then
+    pushd ./apps/local-app/translate
     node ./translate.js "${aws_region}"
     popd
   fi
 
-  if [ ! -f "${repo_root}"/apps/webapp-frontend/src/languages/translations.json ] \
-    || ! diff -q "${repo_root}"/apps/local-app/translate/translations.json "${repo_root}"/apps/webapp-frontend/src/languages/translations.json; then
-    mv "${repo_root}"/apps/local-app/translate/translations.json "${repo_root}"/apps/webapp-frontend/src/languages/translations.json
+  if [ ! -f ./apps/webapp-frontend/src/languages/translations.json ] \
+    || ! diff -q ./apps/local-app/translate/translations.json ./apps/webapp-frontend/src/languages/translations.json; then
+    mv ./apps/local-app/translate/translations.json ./apps/webapp-frontend/src/languages/translations.json
   fi
 
   # region: amplify app
   # Amplify web app for frontend
   aws cloudformation deploy \
-    --template-file "${repo_root}"/cloudformation/amplify_app.yaml \
+    --template-file ./cloudformation/amplify_app.yaml \
     --stack-name innovator-island-amplify-app \
     --parameter-overrides \
       Repository="${REPOSITORY_URL}" \
@@ -63,7 +64,7 @@ function main() {
   account_id=$(aws sts get-caller-identity --query Account --output text)
   sam_deployment_bucket_name="theme-park-sam-deployments-${account_id}"
   aws cloudformation deploy \
-    --template-file "${repo_root}"/cloudformation/sam_deployment_bucket.yaml \
+    --template-file ./cloudformation/sam_deployment_bucket.yaml \
     --stack-name theme-park-sam-deployment-bucket \
     --parameter-overrides \
       BucketName="${sam_deployment_bucket_name}"
@@ -77,7 +78,7 @@ function main() {
 
   # region ride-controller (./apps/ride-controller)
   # Deploy ride controller
-  pushd "${repo_root}"/apps/ride-controller
+  pushd ./apps/ride-controller
   sam build
   sam package --output-template-file package.yaml --s3-bucket "${deploy_bucket}" --s3-prefix ride-controller
   sam deploy \
@@ -91,7 +92,7 @@ function main() {
 
   # region theme-park-backend (./apps/sam-app)
   # Deploy remaining SAM backend
-  pushd "${repo_root}"/apps/sam-app
+  pushd ./apps/sam-app
   sam build
   sam package --output-template-file package.yaml --s3-bucket "${deploy_bucket}" --s3-prefix sam-app
   sam deploy \
@@ -116,7 +117,7 @@ function main() {
 
   # region local operations (./apps/local-app)
   # Populate the DynamoDB Table
-  pushd "${repo_root}"/apps/local-app
+  pushd ./apps/local-app
   npm install
   # This is probably not idempotent (todo: make it idempotent)
   node ./importData.js "${aws_region}" "${dynamo_table}"
@@ -126,7 +127,7 @@ function main() {
 
   # region: (module 2) realtime ride times app (./apps/realtime-ride-times-app)
   # Create new realtime ride times app
-  pushd "${repo_root}"/apps/realtime-ride-times-app
+  pushd ./apps/realtime-ride-times-app
   # grab some info for lambda envvars
   iot_endpoint_address=$(aws iot describe-endpoint --endpoint-type iot:Data-ATS --query 'endpointAddress' --output text)
   dynamo_table_name=$(aws dynamodb list-tables --query "TableNames[?contains(@, 'backend')]" --output text)
@@ -147,7 +148,7 @@ function main() {
   # endregion
 
   # region (module 3a) chromakey processor lambda app (./apps/chromakey-processor)
-  pushd "${repo_root}"/apps/chromakey-processor
+  pushd ./apps/chromakey-processor
 
   # Apparently opencv needs to be compiled for amazon linux 2, which is handled by a lambda layer.
   # Signal: if the file doesn't exist locally, wget it, upload it to the sam deployment bucket, and then create a lambda layer out of it
@@ -198,7 +199,7 @@ function main() {
   # endregion
 
   # region (module 3b) compositing processor lambda app (./apps/compositing-processor)
-  pushd "${repo_root}"/apps/compositing-processor
+  pushd ./apps/compositing-processor
 
   sam build
   sam package \
@@ -219,7 +220,7 @@ function main() {
   # endregion
 
   # region (module 3c) photos-post-processing processor lambda app (./apps/photos-post-processing-processor)
-  pushd "${repo_root}"/apps/photos-post-processing-processor
+  pushd ./apps/photos-post-processing-processor
 
   sam build
   sam package \
@@ -241,31 +242,32 @@ function main() {
   popd
   # endregion
 
-  # region analytics
+  # region theme park business analytics
   aws cloudformation deploy \
-      --template-file "${repo_root}"/cloudformation/business_analytics.yaml \
+      --template-file ./cloudformation/business_analytics.yaml \
       --stack-name theme-park-business-analytics \
       --capabilities CAPABILITY_IAM
   #
 
   # region webapp-frontend (./apps/webapp-frontend)
   # Update frontend
-  if ! grep "initStateAPI: '${initStateAPI}'" "${repo_root}"/apps/webapp-frontend/src/config.js; then
-    sed -i '' "s@initStateAPI: '[^']*'@initStateAPI: '${initStateAPI}'@g" "${repo_root}"/apps/webapp-frontend/src/config.js
+  if ! grep "initStateAPI: '${initStateAPI}'" ./apps/webapp-frontend/src/config.js; then
+    sed -i '' "s@initStateAPI: '[^']*'@initStateAPI: '${initStateAPI}'@g" ./apps/webapp-frontend/src/config.js
   fi
-  if ! grep "photoUploadURL: '${uploadAPI}'" "${repo_root}"/apps/webapp-frontend/src/config.js; then
-    sed -i '' "s@photoUploadURL: '[^']*'@photoUploadURL: '${uploadAPI}'@g" "${repo_root}"/apps/webapp-frontend/src/config.js
+  if ! grep "photoUploadURL: '${uploadAPI}'" ./apps/webapp-frontend/src/config.js; then
+    sed -i '' "s@photoUploadURL: '[^']*'@photoUploadURL: '${uploadAPI}'@g" ./apps/webapp-frontend/src/config.js
   fi
-  if ! grep "poolId: '${identityPoolId}'" "${repo_root}"/apps/webapp-frontend/src/config.js; then
-    sed -i '' "s@poolId: '[^']*'@poolId: '${identityPoolId}'@" "${repo_root}"/apps/webapp-frontend/src/config.js
+  if ! grep "poolId: '${identityPoolId}'" ./apps/webapp-frontend/src/config.js; then
+    sed -i '' "s@poolId: '[^']*'@poolId: '${identityPoolId}'@" ./apps/webapp-frontend/src/config.js
   fi
-  if ! grep "host: '${iot_endpoint_address}'" "${repo_root}"/apps/webapp-frontend/src/config.js; then
-    sed -i '' "s@host: '[^']*'@host: '${iot_endpoint_address}'@" "${repo_root}"/apps/webapp-frontend/src/config.js
+  if ! grep "host: '${iot_endpoint_address}'" ./apps/webapp-frontend/src/config.js; then
+    sed -i '' "s@host: '[^']*'@host: '${iot_endpoint_address}'@" ./apps/webapp-frontend/src/config.js
   fi
-  if ! grep "region: '${aws_region}'" "${repo_root}"/apps/webapp-frontend/src/config.js; then
-    sed -i '' "s@region: '[^']*'@region: '${aws_region}'@" "${repo_root}"/apps/webapp-frontend/src/config.js
+  if ! grep "region: '${aws_region}'" ./apps/webapp-frontend/src/config.js; then
+    sed -i '' "s@region: '[^']*'@region: '${aws_region}'@" ./apps/webapp-frontend/src/config.js
   fi
   # endregion
+  pushd
 }
 
 main
