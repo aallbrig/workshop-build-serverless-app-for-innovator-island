@@ -23,7 +23,6 @@ Resources:
       Environment:
         Variables:
           streamName: !Ref StreamName
-          AWS_REGION: !Ref AWS::Region
       Policies:
         - Statement:
           - Effect: Allow
