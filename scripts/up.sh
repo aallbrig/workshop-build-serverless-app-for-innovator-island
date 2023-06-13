@@ -90,9 +90,9 @@ function main() {
   popd
   # endregion
 
-  # region theme-park-backend (./apps/sam-app)
+  # region theme-park-backend (./apps/theme-park-backend
   # Deploy remaining SAM backend
-  pushd ./apps/sam-app
+  pushd ./apps/theme-park-backend
   sam build
   sam package --output-template-file package.yaml --s3-bucket "${deploy_bucket}" --s3-prefix sam-app
   sam deploy \
@@ -242,11 +242,31 @@ function main() {
   popd
   # endregion
 
-  # region theme park business analytics
+  # region (module 5) theme park business analytics
+  # a. starter resources e.g. s3 bucket and data stream
   aws cloudformation deploy \
       --template-file ./cloudformation/business_analytics.yaml \
       --stack-name theme-park-business-analytics \
       --capabilities CAPABILITY_IAM
+  stream_name=$(aws cloudformation describe-stacks --stack-name theme-park-business-analytics --query "Stacks[0].Outputs[?OutputKey=='StreamName'].OutputValue" --output text)
+  stream_arn=$(aws cloudformation describe-stacks --stack-name theme-park-business-analytics --query "Stacks[0].Outputs[?OutputKey=='StreamArn'].OutputValue" --output text)
+
+  # b. park simulation lambda fn
+  pushd ./apps/park-simulator
+  sam build
+  sam package \
+      --output-template-file package.yaml \
+      --s3-bucket "${deploy_bucket}" \
+      --s3-prefix park-simulator
+  sam deploy \
+    --template-file package.yaml \
+    --stack-name park-simulator \
+    --capabilities CAPABILITY_IAM \
+    --parameter-overrides \
+      StreamName="${stream_name}" \
+      StreamArn="${stream_arn}" \
+    --no-fail-on-empty-changeset
+  popd
   #
 
   # region webapp-frontend (./apps/webapp-frontend)
@@ -267,7 +287,7 @@ function main() {
     sed -i '' "s@region: '[^']*'@region: '${aws_region}'@" ./apps/webapp-frontend/src/config.js
   fi
   # endregion
-  pushd
+  popd
 }
 
 main

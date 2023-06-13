@@ -73,3 +73,11 @@ Resources:
           LogGroupName: !Sub "${AWS::StackName}-data-firehose"
           LogStreamName: !Sub "${AWS::StackName}-data-firehose"
         S3BackupMode: Disabled
+
+Outputs:
+  StreamName:
+    Description: Name of Data Stream
+    Value: !Ref DataStreamName
+  StreamArn:
+    Description: ARN of Data Stream
+    Value: !GetAtt DataFirehoseDelivery.Arn
