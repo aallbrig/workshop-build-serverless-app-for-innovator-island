@@ -39,6 +39,7 @@ function main() {
 
   if [ ! -f ./apps/local-app/translate/translations.json ]; then
     pushd ./apps/local-app/translate
+    npm install
     node ./translate.js "${aws_region}"
     popd
   fi
@@ -267,7 +268,12 @@ function main() {
       StreamArn="${stream_arn}" \
     --no-fail-on-empty-changeset
   popd
-  #
+  # endregion
+
+  # region (module 6) theme park quicksight dashboards (./apps/quicksight)
+  # input: s3 bucket with data, quicksight account
+  # actually, just going to do this manually...
+  # endregion
 
   # region webapp-frontend (./apps/webapp-frontend)
   # Update frontend

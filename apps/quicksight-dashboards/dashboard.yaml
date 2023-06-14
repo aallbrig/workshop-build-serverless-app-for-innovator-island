@@ -1,0 +1,27 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: Dashboard for quicksight
+
+Parameters:
+  DashboardId:
+    Description: Name of Dashboard
+    Type: String
+    Default: theme-park-dashboard
+
+Resources:
+  Analysis:
+    Type: AWS::QuickSight::Analysis
+    Properties:
+      AwsAccountId: !Ref AWS::AccountId
+      AnalysisId: theme-park-analysis
+      Name: Theme Park Analysis
+      SourceEntity:
+
+
+
+  # Dashboard:
+    # Type: AWS::QuickSight::Dashboard
+    # Properties:
+    #   AwsAccountId: !Ref AWS::AccountId
+    #   DashboardId: !Ref DashboardId
+    #   Name: !Ref DashboardId
+      # Parameters: (TODO)
