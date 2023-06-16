@@ -17,7 +17,7 @@ Parameters:
     Description: Name of the IAM role to create for the lambda fn
   SNSTopicName:
     Type: String
-    Description: SNS Topic that this lambda fn will publish to
+    Description: SNS Topic that this lambda fn will trigger from
   IOTDataEndpoint:
     Type: String
     Description: AWS IoT endpoint for publishing to the topic

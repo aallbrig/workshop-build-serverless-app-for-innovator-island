@@ -22,6 +22,7 @@ function main() {
     theme-park-sam-deployment-bucket \
     theme-park-business-analytics \
     park-simulator \
+    eventbridge-rebroadcaster \
   )
 
   # hack: remove all resources from S3 bucket before deleting the cloudformation stack

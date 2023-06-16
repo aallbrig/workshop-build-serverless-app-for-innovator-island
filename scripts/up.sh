@@ -270,9 +270,33 @@ function main() {
   popd
   # endregion
 
-  # region (module 6) theme park quicksight dashboards (./apps/quicksight)
+  # region (module 5) theme park quicksight dashboards (./apps/quicksight)
   # input: s3 bucket with data, quicksight account
   # actually, just going to do this manually...
+  # endregion
+
+  # region (module 6) webapp-frontend (./apps/webapp-frontend)
+  pushd ./apps/eventbridge-rebroadcaster
+  # copy/paste convenience
+  deploy_bucket=$( \
+    aws cloudformation describe-stacks \
+      --stack-name theme-park-sam-deployment-bucket \
+      --query "Stacks[0].Outputs[?OutputKey=='BucketName'].OutputValue" \
+      --output text \
+  )
+  ride_updates_sns_topic=$(aws cloudformation describe-stacks --stack-name theme-park-ride-times --query "Stacks[0].Outputs[?OutputKey=='RideUpdatesSNSTopic'].OutputValue" --output text)
+  sam build
+  sam package \
+      --output-template-file package.yaml \
+      --s3-bucket "${deploy_bucket}" \
+      --s3-prefix eventbridge-rebroadcaster
+  sam deploy \
+    --template-file package.yaml \
+    --stack-name eventbridge-rebroadcaster \
+    --capabilities CAPABILITY_IAM \
+    --parameter-overrides \
+      SNSTopicName="${ride_updates_sns_topic}" \
+    --no-fail-on-empty-changeset
   # endregion
 
   # region webapp-frontend (./apps/webapp-frontend)

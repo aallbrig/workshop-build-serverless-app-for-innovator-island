@@ -1,0 +1,70 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: Innovator Island - 6 Event-based architecture - Part 1.
+
+Globals:
+  Function:
+    Timeout: 5
+
+Parameters:
+  SNSTopicName:
+    Type: String
+    Description: SNS Topic that this lambda fn will trigger from
+
+
+Resources:
+  PublishFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: publishFunction/
+      Handler: app.handler
+      Runtime: nodejs16.x
+      MemorySize: 128
+      Policies:
+        - Statement:
+            - Effect: Allow
+              Resource: '*'
+              Action:
+                - events:PutEvents
+      Events:
+        SNSTopicTrigger:
+          Type: SNS
+          Properties:
+            Topic: !Ref SNSTopicName
+
+  MetricsFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: metricsFunction/
+      Handler: app.handler
+      Runtime: nodejs16.x
+      MemorySize: 128
+      Policies:
+        - Statement:
+            - Effect: Allow
+              Resource: '*'
+              Action:
+                - cloudwatch:PutMetricData
+
+  MetricsFunctionPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !GetAtt MetricsFunction.Arn
+      Principal: events.amazonaws.com
+
+  EventBridgeRule:
+    Type: AWS::Events::Rule
+    Properties:
+      Name: theme-park-events-metrics
+      Description: Rule to populate ride data to CloudWatch metrics.
+      EventPattern:
+        source:
+          - themepark.rides
+        detail-type:
+          - waitTimesSummary
+      State: "ENABLED"
+      Targets:
+        - Arn: !GetAtt MetricsFunction.Arn
+          Id: !Ref MetricsFunction
+
