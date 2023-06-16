@@ -58,13 +58,12 @@ Resources:
     Properties:
       Name: theme-park-events-metrics
       Description: Rule to populate ride data to CloudWatch metrics.
+      State: ENABLED
       EventPattern:
         source:
           - themepark.rides
         detail-type:
           - waitTimesSummary
-      State: "ENABLED"
       Targets:
         - Arn: !GetAtt MetricsFunction.Arn
           Id: !Ref MetricsFunction
-

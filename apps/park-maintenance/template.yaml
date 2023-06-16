@@ -1,0 +1,120 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: Innovator Island - 6 Event-based architecture - Part 2.
+
+Globals:
+  Function:
+    Timeout: 5
+
+Parameters:
+  InfoWarningEmail:
+    Type: String
+    Description: Email address to send info and warning alerts to
+    Default: example@example.com
+  EmergencySMSPhoneNumber:
+    Type: String
+    Description: Phone number to send emergency alerts to
+    Default: +15555555555
+
+Resources:
+  PublishFunction:
+    Type: AWS::Serverless::Function 
+    Properties:
+      CodeUri: outagesFunction/
+      Handler: app.handler
+      Runtime: nodejs16.x
+      MemorySize: 128
+      Policies:
+        - Statement:
+          - Effect: Allow
+            Resource: '*'
+            Action:
+              - events:PutEvents
+
+  PublishFunctionPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !GetAtt PublishFunction.Arn
+      Principal: events.amazonaws.com
+
+  EventBridgeRule:
+    Type: AWS::Events::Rule
+    Properties:
+      Name: theme-park-events-outages
+      Description: Rule to filter rides with current outages.
+      State: ENABLED
+      EventPattern:
+        source:
+          - themepark.rides
+        detail-type:
+          - waitTimes
+        detail:
+          inService:
+            - false
+      Targets:
+        - Arn: !GetAtt PublishFunction.Arn
+          Id: !Ref PublishFunction
+
+  InfoWarningSNSTopic:
+    Type: AWS::SNS::Topic
+    Properties:
+      TopicName: theme-park-events-outages-alerts-info
+      DisplayName: Topic for info and warning alerts
+
+  InfoWarningSubscription:
+    Type: AWS::SNS::Subscription
+    Properties:
+      Endpoint: !Ref InfoWarningEmail
+      Protocol: email-json
+      TopicArn: !Ref InfoWarningSNSTopic
+
+  InfoWarningEventRule:
+    Type: AWS::Events::Rule
+    Properties:
+      Name: theme-park-events-outages-alerts-info
+      Description: Info and Warning outages.
+      State: ENABLED
+      EventPattern:
+        source:
+          - themepark.rides
+        detail-type:
+          - outage
+        detail:
+          type:
+            - Info
+            - Warning
+      Targets:
+        - Arn: !Ref InfoWarningSNSTopic
+          Id: InfoWarningSNSTopic
+
+  EmergencyOutageSNSTopic:
+    Type: AWS::SNS::Topic
+    Properties:
+      TopicName: theme-park-events-outages-alerts-emergency
+      DisplayName: Topic for emergency alerts
+
+  EmergencySubscription:
+    Type: AWS::SNS::Subscription
+    Properties:
+      Endpoint: !Ref EmergencySMSPhoneNumber
+      Protocol: sms
+      TopicArn: !Ref EmergencyOutageSNSTopic
+
+  EmergencyEventRule:
+    Type: AWS::Events::Rule
+    Properties:
+      Name: theme-park-events-outages-alerts-emergency
+      Description: Emergency outages
+      State: ENABLED
+      EventPattern:
+        source:
+          - themepark.rides
+        detail-type:
+          - outage
+        detail:
+          type:
+            - Emergency
+      Targets:
+        - Arn: !Ref EmergencyOutageSNSTopic
+          Id: EmergencyOutageSNSTopic

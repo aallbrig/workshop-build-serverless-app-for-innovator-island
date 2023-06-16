@@ -1,6 +1,12 @@
 #!/usr/bin/env bash
 __required_binaries=(git aws node)
-__required_environment_variables=(AMPLIFYAPPGITHUBACCESSTOKEN REPOSITORY_URL WEBAPPFRONTENDROOT)
+__required_environment_variables=( \
+  AMPLIFYAPPGITHUBACCESSTOKEN \
+  REPOSITORY_URL \
+  WEBAPPFRONTENDROOT \
+  SUBSCRIPTION_EMAIL \
+  SUBSCRIPTION_SMS \
+)
 ARCH=$(uname -m)
 
 set -e
@@ -278,13 +284,7 @@ function main() {
   # region (module 6) webapp-frontend (./apps/webapp-frontend)
   pushd ./apps/eventbridge-rebroadcaster
   # copy/paste convenience
-  deploy_bucket=$( \
-    aws cloudformation describe-stacks \
-      --stack-name theme-park-sam-deployment-bucket \
-      --query "Stacks[0].Outputs[?OutputKey=='BucketName'].OutputValue" \
-      --output text \
-  )
-  ride_updates_sns_topic=$(aws cloudformation describe-stacks --stack-name theme-park-ride-times --query "Stacks[0].Outputs[?OutputKey=='RideUpdatesSNSTopic'].OutputValue" --output text)
+  # (module 6a)
   sam build
   sam package \
       --output-template-file package.yaml \
@@ -297,6 +297,29 @@ function main() {
     --parameter-overrides \
       SNSTopicName="${ride_updates_sns_topic}" \
     --no-fail-on-empty-changeset
+  popd
+  # (module 6b)
+  pushd ./apps/park-maintenance
+  deploy_bucket=$( \
+    aws cloudformation describe-stacks \
+      --stack-name theme-park-sam-deployment-bucket \
+      --query "Stacks[0].Outputs[?OutputKey=='BucketName'].OutputValue" \
+      --output text \
+  )
+  sam build
+  sam package \
+      --output-template-file package.yaml \
+      --s3-bucket "${deploy_bucket}" \
+      --s3-prefix park-maintenance
+  sam deploy \
+    --template-file package.yaml \
+    --stack-name park-maintenance \
+    --capabilities CAPABILITY_IAM \
+    --parameter-overrides \
+      InfoWarningEmail="${SUBSCRIPTION_EMAIL}" \
+      EmergencySMSPhoneNumber="${SUBSCRIPTION_SMS}" \
+    --no-fail-on-empty-changeset
+  popd
   # endregion
 
   # region webapp-frontend (./apps/webapp-frontend)
