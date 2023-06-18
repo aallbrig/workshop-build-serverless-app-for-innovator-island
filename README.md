@@ -5,7 +5,16 @@ This is a learning project for me so that I can solidify my serverless applicati
 
 I enjoy making things more difficult for myself so any manual steps described in the workshop series will be automated. Check out `./scripts/up.sh` and `./scripts/down.sh` to see this effort.
 
-[Current Progress Video Bookmark](https://youtu.be/aNgmgZjzNr4?t=1026)
+~~[Current Progress Video Bookmark](https://youtu.be/aNgmgZjzNr4?t=1026)~~ Complete!
+
+## Workshop Complete
+As of today, I'm declaring that I've finished this workshop.
+One goal I had going into this project was to automate as much as I could and I feel I've accomplished that goal.
+I did not automate all modules because I manually created AWS QuickSight analysis and dashboards, which was in module 5.
+I still feel great about the automation I did accomplish and I learned a lot about AWS services and serverless applications.
+It was a lot of work, let me tell you!
+
+I hope this helps other people, either from direct browsing of this project's source code or by the cornucopia of LLMs vacuuming up any and all internet bits. 🫡
 
 ## Issues
 - `[ERROR] Runtime.ImportModuleError: Unable to import module 'app': urllib3 v2.0 only supports OpenSSL 1.1.1+, currently the 'ssl' module is compiled with OpenSSL 1.0.2k-fips  26 Jan 2017. See: https://github.com/urllib3/urllib3/issues/2168

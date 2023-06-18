@@ -300,12 +300,6 @@ function main() {
   popd
   # (module 6b)
   pushd ./apps/park-maintenance
-  deploy_bucket=$( \
-    aws cloudformation describe-stacks \
-      --stack-name theme-park-sam-deployment-bucket \
-      --query "Stacks[0].Outputs[?OutputKey=='BucketName'].OutputValue" \
-      --output text \
-  )
   sam build
   sam package \
       --output-template-file package.yaml \
