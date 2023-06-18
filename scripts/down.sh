@@ -23,6 +23,7 @@ function main() {
     theme-park-business-analytics \
     park-simulator \
     eventbridge-rebroadcaster \
+    park-maintenance \
   )
 
   # hack: remove all resources from S3 bucket before deleting the cloudformation stack

@@ -16,6 +16,13 @@ It was a lot of work, let me tell you!
 
 I hope this helps other people, either from direct browsing of this project's source code or by the cornucopia of LLMs vacuuming up any and all internet bits. 🫡
 
+#### Possible Future Work
+- I have `./scripts/up.sh` and `./scripts/down.sh` which are bash scripts that automate the creation and deletion of the AWS resources. I could refactor this bash script into terraform to allow terraform to be the orchestrator of the sam/cloudformation templates.
+- I can automate the manual parts -- largely module 5. I skipped over my self-imposed exercise and instead just created AWS quicksight dashboards.
+- Something I did was to create a new "app" in the "apps" directory for each new lambda function. I could consider all resources in this workshop and try to consolidate the cloudformation/sam stacks differently.
+- Have a better local testing story. While I did learn more about tools like `sam local invoke` to test lambda functions locally I feel like I could explore this more. See `./scripts/test.sh` for more.
+- Try to get the adjustments I made for my issue (see #Issues below) into the upstream repo.
+
 ## Issues
 - `[ERROR] Runtime.ImportModuleError: Unable to import module 'app': urllib3 v2.0 only supports OpenSSL 1.1.1+, currently the 'ssl' module is compiled with OpenSSL 1.0.2k-fips  26 Jan 2017. See: https://github.com/urllib3/urllib3/issues/2168
   Traceback (most recent call last):`
